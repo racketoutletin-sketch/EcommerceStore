@@ -79,7 +79,15 @@ class UserSerializer(serializers.ModelSerializer):
 
 class UserProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
+    profile_picture_url = serializers.ReadOnlyField()
 
     class Meta:
         model = UserProfile
-        fields = ['user', 'profile_picture', 'date_of_birth', 'preferences']
+        fields = [
+            'user',
+            'profile_picture',
+            'profile_picture_url',
+            'date_of_birth',
+            'preferences'
+        ]
+

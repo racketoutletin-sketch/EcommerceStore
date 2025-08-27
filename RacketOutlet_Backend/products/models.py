@@ -1,6 +1,12 @@
+import uuid
 from django.db import models
 from django.utils.text import slugify
 from django.core.validators import MinValueValidator
+from common.supabase_storage_backend import SupabaseStorage
+
+
+def get_supabase_storage():
+    return SupabaseStorage()
 
 # -------------------------------
 # Category Model
@@ -9,7 +15,8 @@ class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
     slug = models.SlugField(max_length=120, unique=True, blank=True)
     description = models.TextField(blank=True, null=True)
-    image = models.ImageField(upload_to='category_images/', blank=True, null=True)
+    image = models.ImageField(storage=get_supabase_storage(), upload_to="category_images/", blank=True, null=True)
+    image_url = models.URLField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -24,6 +31,11 @@ class Category(models.Model):
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
 
+        # Auto-populate Supabase public URL
+        if self.image and not self.image_url:
+            self.image_url = get_supabase_storage().url(self.image.name)
+            super().save(update_fields=["image_url"])
+
     def __str__(self):
         return self.name
 
@@ -36,7 +48,8 @@ class SubCategory(models.Model):
     slug = models.SlugField(max_length=120, unique=True, blank=True)
     parent_category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='subcategories')
     description = models.TextField(blank=True, null=True)
-    image = models.ImageField(upload_to='subcategory_images/', blank=True, null=True)
+    image = models.ImageField(storage=get_supabase_storage(), upload_to="subcategory_images/", blank=True, null=True)
+    image_url = models.URLField(blank=True, null=True)
     is_featured = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -51,6 +64,10 @@ class SubCategory(models.Model):
         if not self.slug:
             self.slug = slugify(f"{self.parent_category.name}-{self.name}")
         super().save(*args, **kwargs)
+
+        if self.image and not self.image_url:
+            self.image_url = get_supabase_storage().url(self.image.name)
+            super().save(update_fields=["image_url"])
 
     def __str__(self):
         return f"{self.parent_category.name} -> {self.name}"
@@ -75,7 +92,8 @@ class Product(models.Model):
     material = models.CharField(max_length=100, blank=True, null=True)
 
     # Primary image for quick access
-    main_image = models.ImageField(upload_to='product_main_images/', blank=True, null=True)
+    main_image = models.ImageField(storage=get_supabase_storage(), upload_to="product_main_images/", blank=True, null=True)
+    main_image_url = models.URLField(blank=True, null=True)
 
     # Dynamic attributes
     extra_attributes = models.JSONField(blank=True, null=True, help_text="Store dynamic product attributes as JSON")
@@ -96,12 +114,10 @@ class Product(models.Model):
         if not self.slug:
             self.slug = slugify(f"{self.subcategory.parent_category.name}-{self.subcategory.name}-{self.name}")
         super().save(*args, **kwargs)
-        # Sync main_image with primary image if not set
-        if not self.main_image:
-            primary_image = self.images.filter(is_primary=True).first()
-            if primary_image:
-                self.main_image = primary_image.image
-                super().save(update_fields=['main_image'])
+
+        if self.main_image and not self.main_image_url:
+            self.main_image_url = get_supabase_storage().url(self.main_image.name)
+            super().save(update_fields=["main_image_url"])
 
     def __str__(self):
         return f"{self.subcategory.name} -> {self.name}" + (f" ({self.brand})" if self.brand else "")
@@ -116,13 +132,20 @@ class Product(models.Model):
 # -------------------------------
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to='product_images/')
+    image = models.ImageField(storage=get_supabase_storage(), upload_to="product_images/")
     image_url = models.URLField(blank=True, null=True)
     alt_text = models.CharField(max_length=255, blank=True, null=True)
     is_primary = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['-is_primary', 'id']
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if self.image and not self.image_url:
+            self.image_url = get_supabase_storage().url(self.image.name)
+            super().save(update_fields=["image_url"])
 
     def __str__(self):
         return f"{self.product.name} Image"

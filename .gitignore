@@ -15,8 +15,9 @@ __pycache__/
 *.pyo
 *.pyd
 
+working
 
-
+migrations
 
 # Logs
 logs

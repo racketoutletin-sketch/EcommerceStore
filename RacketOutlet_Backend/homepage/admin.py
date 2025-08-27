@@ -1,6 +1,19 @@
 from django.contrib import admin
-from .models import Banner
+from .models import (
+    Banner,
+    HomeCategories,
+    HomeVideo,
+    ExclusiveProduct,
+    FeaturedProduct,
+    ShopTheLook,
+    Hotspot,
+)
+from products.models import Product, SubCategory
 
+
+# -------------------------
+# Banner Admin
+# -------------------------
 @admin.register(Banner)
 class BannerAdmin(admin.ModelAdmin):
     list_display = ("id", "title", "subtitle", "subcategory", "product", "created_at")
@@ -8,87 +21,83 @@ class BannerAdmin(admin.ModelAdmin):
     ordering = ("-created_at",)
     list_filter = ("created_at",)
 
-
-# home/admin.py
-from django.contrib import admin
-from .models import HomeCategories
+    # Use raw_id_fields to avoid large dropdowns and cursor issues
+    raw_id_fields = ("subcategory", "product")
 
 
+# -------------------------
+# HomeCategories Admin
+# -------------------------
 @admin.register(HomeCategories)
 class HomeCategoriesAdmin(admin.ModelAdmin):
-    list_display = ("id", "subcategory", "created_at")   # show in list view
-    search_fields = ("subcategory__name",)              # search by subcategory name
-    ordering = ("-created_at",)                         # latest first
-    list_filter = ("created_at",)                       # sidebar filter
+    list_display = ("id", "subcategory", "created_at")
+    search_fields = ("subcategory__name",)
+    ordering = ("-created_at",)
+    list_filter = ("created_at",)
+    raw_id_fields = ("subcategory",)
 
 
-from django.contrib import admin
-from .models import HomeVideo
-
+# -------------------------
+# HomeVideo Admin
+# -------------------------
 @admin.register(HomeVideo)
 class HomeVideoAdmin(admin.ModelAdmin):
     list_display = ("id", "video", "video_url", "created_at")
     search_fields = ("video_url",)
     list_filter = ("created_at",)
 
+    # Delete video from storage when deleting objects
+    def delete_model(self, request, obj):
+        if obj.video and obj.video.name:
+            obj.video.storage.delete(obj.video.name)
+        obj.delete()
 
-from django.contrib import admin
-from .models import ExclusiveProduct, FeaturedProduct
+    def delete_queryset(self, request, queryset):
+        for obj in queryset:
+            if obj.video and obj.video.name:
+                obj.video.storage.delete(obj.video.name)
+        queryset.delete()
 
 
+# -------------------------
+# ExclusiveProduct Admin
+# -------------------------
 @admin.register(ExclusiveProduct)
 class ExclusiveProductAdmin(admin.ModelAdmin):
     list_display = ("id", "get_product_name", "created_at")
     list_filter = ("created_at",)
     search_fields = ("product__name",)
+    raw_id_fields = ("product",)
 
     def get_product_name(self, obj):
         return obj.product.name if obj.product else "No Product"
     get_product_name.short_description = "Product"
 
-    # Optional: Show product image thumbnail if available
-    def product_image(self, obj):
-        if obj.product and hasattr(obj.product, "image") and obj.product.image:
-            return f"<img src='{obj.product.image.url}' width='60' height='60' style='object-fit:contain;'/>"
-        return "No Image"
-    product_image.allow_tags = True
-    product_image.short_description = "Image"
 
-
+# -------------------------
+# FeaturedProduct Admin
+# -------------------------
 @admin.register(FeaturedProduct)
 class FeaturedProductAdmin(admin.ModelAdmin):
     list_display = ("id", "get_product_name", "created_at")
     list_filter = ("created_at",)
     search_fields = ("product__name",)
+    raw_id_fields = ("product",)
 
     def get_product_name(self, obj):
         return obj.product.name if obj.product else "No Product"
     get_product_name.short_description = "Product"
 
-    # Optional: Show product image thumbnail if available
-    def product_image(self, obj):
-        if obj.product and hasattr(obj.product, "image") and obj.product.image:
-            return f"<img src='{obj.product.image.url}' width='60' height='60' style='object-fit:contain;'/>"
-        return "No Image"
-    product_image.allow_tags = True
-    product_image.short_description = "Image"
 
-
-from django.contrib import admin
-from .models import Product, ShopTheLook, Hotspot
-
-
-
-from django.contrib import admin
-from .models import ShopTheLook, Hotspot
-from products.models import Product  # for FK
-
+# -------------------------
+# ShopTheLook & Hotspot Admin
+# -------------------------
 class HotspotInline(admin.TabularInline):
     model = Hotspot
     extra = 1
-    readonly_fields = ("product_name", "product_image")  # show product info inline
+    readonly_fields = ("product_name", "product_image")
+    raw_id_fields = ("product",)
 
-    # Display product name and image in the inline
     def product_name(self, obj):
         return obj.product.name if obj.product else "-"
     product_name.short_description = "Product Name"
@@ -104,4 +113,4 @@ class HotspotInline(admin.TabularInline):
 @admin.register(ShopTheLook)
 class ShopTheLookAdmin(admin.ModelAdmin):
     list_display = ("id", "title")
-    inlines = [HotspotInline]  # include hotspots inline
+    inlines = [HotspotInline]

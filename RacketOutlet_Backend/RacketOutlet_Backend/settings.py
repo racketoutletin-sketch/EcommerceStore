@@ -94,26 +94,26 @@ WSGI_APPLICATION = 'RacketOutlet_Backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
 # DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": "postgres",  # database name from Supabase
-#         "USER": "postgres.wzonllfccvmvoftahudd",  # full Supabase username
-#         "PASSWORD": os.environ.get("SUPABASE_DB_PASSWORD"),
-#         "HOST": "aws-1-ap-southeast-1.pooler.supabase.com",  # pooler host
-#         "PORT": "6543",  # pooler port
-#         "OPTIONS": {
-#             "sslmode": "require",  # pooler requires SSL
-#         },
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "postgres",  # database name from Supabase
+        "USER": "postgres.wzonllfccvmvoftahudd",  # full Supabase username
+        "PASSWORD": os.environ.get("SUPABASE_DB_PASSWORD"),
+        "HOST": "aws-1-ap-southeast-1.pooler.supabase.com",  # pooler host
+        "PORT": "6543",  # pooler port
+        "OPTIONS": {
+            "sslmode": "require",  # pooler requires SSL
+        },
+    }
+}
 
 
 # Password validation

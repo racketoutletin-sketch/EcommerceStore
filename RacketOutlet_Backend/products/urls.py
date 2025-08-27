@@ -2,7 +2,7 @@ from django.urls import path
 from .views import *
 
 urlpatterns = [
-    #user point of view
+    
     path('categories/featured/', FeaturedCategoryListView.as_view(), name='featured-category-list'),
     path('subcategories/featured/', FeaturedSubCategoryListView.as_view(), name='featured-subcategory-list'),
     path('products/featured/', FeaturedProductListView.as_view(), name='featured-product-list'),

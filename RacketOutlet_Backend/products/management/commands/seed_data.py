@@ -53,12 +53,21 @@ class Command(BaseCommand):
                 for k in range(1, 11):
                     prod_name = f"{subcat.name} {k}"
                     brand = random.choice(BRANDS)
+
+                    price = random.randint(50, 500)
+                    discounted_price = None
+
+                    # ~50% chance to apply discount
+                    if random.choice([True, False]):
+                        discount = random.randint(5, int(price * 0.3))  # discount max 30% of price
+                        discounted_price = price - discount
+
                     product = Product.objects.create(
                         name=prod_name,
                         description=f"High-quality {prod_name} by {brand}",
                         subcategory=subcat,
-                        price=random.randint(50, 500),
-                        discounted_price=random.choice([None, random.randint(30, 450)]),
+                        price=price,
+                        discounted_price=discounted_price,
                         sku=f"{cat_name[:3]}-{sub_name[:3]}-{k}",
                         brand=brand,
                         weight=random.randint(1, 10),
@@ -92,4 +101,4 @@ class Command(BaseCommand):
 
                     self.stdout.write(f"    Created Product: {product.name} with images")
 
-        self.stdout.write(self.style.SUCCESS("Realistic sports store seeding completed!"))
+        self.stdout.write(self.style.SUCCESS("✅ Realistic sports store seeding completed!"))

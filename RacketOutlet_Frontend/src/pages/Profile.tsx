@@ -84,7 +84,7 @@ export default function Profile() {
             {/* Profile Image */}
             {profile.profile_picture ? (
               <img
-                src={`${import.meta.env.VITE_API_URL}${profile.profile_picture}`}
+                src={profile.profile_picture}
                 alt="Profile"
                 className="w-40 h-40 rounded-full object-cover border-4 border-black shadow-lg"
               />
