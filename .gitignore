@@ -8,6 +8,7 @@ backend/**/*.pyo
 backend/**/*.pyd
 backend/**/*.pyc
 
+
 # General Python cache (anywhere, just in case)
 __pycache__/
 *.py[cod]
