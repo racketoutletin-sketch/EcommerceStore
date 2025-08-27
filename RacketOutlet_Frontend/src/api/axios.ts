@@ -2,7 +2,8 @@
 import axios from "axios";
 import { getAccessToken, getRefreshToken, setTokens, clearTokens } from "../utils/tokenUtils";
 
-const api = axios.create({ baseURL: "http://127.0.0.1:8000/" });
+const api = axios.create({ baseURL: import.meta.env.VITE_API_URL });
+
 
 // Request interceptor
 api.interceptors.request.use((config) => {
