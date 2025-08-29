@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Loader from "../Loader";
+import { useAppDispatch } from "../../redux/store"; 
+import { logout } from "../../redux/features/auth/authSlice";
 import {
   faUser,
   faSearch,
@@ -57,11 +59,13 @@ const Header: React.FC = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+  const dispatch = useAppDispatch();
+    const handleLogout = () => {
+      dispatch(logout());   // 👈 clears tokens + user properly
+      navigate("/login");
+    };
+  
 
-  const handleLogout = () => {
-    localStorage.removeItem("access_token"); // replace with Redux logout if needed
-    navigate("/login");
-  };
 
   const handleProfileClick = () => {
     if (!accessToken) navigate("/login");
