@@ -117,7 +117,7 @@ const CheckoutPage: React.FC = () => {
             });
             alert("Payment successful!");
             handleRemoveCartItems(orderedItemIds);
-            window.location.href = `/orders/${order.id}`;
+            window.location.href = `/orders`;
           } catch (err: any) {
             console.error(err);
             await api.post(`/api/orders/${order.id}/payment/fail/`);

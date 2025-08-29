@@ -2,6 +2,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import Loader from "../Loader";
 import {
   faUser,
   faSearch,
@@ -80,7 +81,7 @@ const Header: React.FC = () => {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex flex-wrap space-x-6 items-center">
           {loading ? (
-            <span className="text-gray-500">Loading...</span>
+            <Loader/>
           ) : categories.length > 0 ? (
             categories.map((cat) => (
               <Link
@@ -167,7 +168,7 @@ const Header: React.FC = () => {
       >
         <div className="p-6 flex flex-col space-y-4">
           {loading ? (
-            <span className="text-gray-500">Loading...</span>
+            <Loader/>
           ) : categories.length > 0 ? (
             categories.map((cat) => (
               <Link
