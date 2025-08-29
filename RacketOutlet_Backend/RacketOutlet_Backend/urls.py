@@ -17,7 +17,7 @@ urlpatterns = [
     path('api/', include('homepage.urls')),
 
         # Health check endpoint
-    path('/', health_check),
+    path('', health_check),
 ]
 
 if settings.DEBUG:
