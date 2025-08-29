@@ -1,12 +1,46 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../../api/axios";
 
+// --- Types ---
+export interface ProductImage {
+  id: number;
+  image?: string | null;
+  alt_text?: string | null;
+  is_primary: boolean;
+}
+
+export interface ProductDetailType {
+  id: number;
+  name: string;
+  description?: string | null;
+  main_image?: string | null;
+  images?: ProductImage[];
+  price: string;
+  discounted_price?: string | null;
+  brand?: string | null;
+  sub_category_id?: number;
+  is_featured?: boolean;
+  is_deal_of_the_day?: boolean;
+  is_exclusive_product?: boolean;
+}
+
+export interface CarouselProduct {
+  id: number;
+  name: string;
+  description: string;
+  main_image: string;
+  current_price: number;
+  discounted_price?: number;
+  brand: string;
+}
+
+// --- State ---
 interface ProductState {
-  featured: any[];
-  dealOfTheDay: any[];
-  exclusive: any[];
-  searchResults: any[];
-  productDetail: any | null; // for single product
+  featured: CarouselProduct[];
+  dealOfTheDay: CarouselProduct[];
+  exclusive: CarouselProduct[];
+  searchResults: CarouselProduct[];
+  productDetail: ProductDetailType | null;
   loading: boolean;
   error: string | null;
 }
@@ -21,19 +55,27 @@ const initialState: ProductState = {
   error: null,
 };
 
+// --- Async Thunks ---
 // Fetch single product by ID
-export const fetchProductById = createAsyncThunk(
+export const fetchProductById = createAsyncThunk<
+  ProductDetailType, // return type
+  number,            // argument type
+  { rejectValue: string }
+>(
   "products/fetchById",
-  async (productId: number, { rejectWithValue }) => {
+  async (productId, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/api/products/view/${productId}/`);
-      return response.data;
+      const response = await api.get(
+        `https://wzonllfccvmvoftahudd.supabase.co/functions/v1/get-product--with-product-ID?id=${productId}`
+      );
+      return response.data as ProductDetailType;
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.detail || "Failed to fetch product");
     }
   }
 );
 
+// --- Slice ---
 const productSlice = createSlice({
   name: "products",
   initialState,
@@ -51,7 +93,7 @@ const productSlice = createSlice({
       })
       .addCase(fetchProductById.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.error = action.payload ?? "Failed to fetch product";
       });
   },
 });

@@ -1,8 +1,21 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../../api/axios";
 
+interface Product {
+  id: number;
+  name: string;
+  price: number;
+  discounted_price?: number;
+  current_price: number;
+  brand: string;
+  extra_attributes?: { type?: string };
+  quantity: number;
+  description?:string;
+  main_image?: string | null;
+}
+
 interface ProductListState {
-  searchResults: any[];
+  searchResults: Product[];
   availableBrands: string[];
   availableProductTypes: string[];
   loading: boolean;
@@ -17,7 +30,10 @@ const initialState: ProductListState = {
   error: null,
 };
 
-// Fetch products by subcategory with optional filters & sorting
+// Type guard to ensure a value is a string
+const isString = (value: unknown): value is string => typeof value === "string";
+
+// Async thunk to fetch products by subcategory with filters & sorting
 export const fetchProductsBySubCategory = createAsyncThunk(
   "productListView/fetchBySubCategory",
   async (
@@ -29,44 +45,46 @@ export const fetchProductsBySubCategory = createAsyncThunk(
       priceMin?: number;
       priceMax?: number;
       inStock?: boolean;
+      limit?: number;
+      offset?: number;
     },
     { rejectWithValue }
   ) => {
     try {
-      // Build only non-empty params
-      const queryObj: any = {};
+      const queryObj: Record<string, string> = {
+        subcategory_id: params.subId.toString(),
+      };
+
       if (params.sort) queryObj.sort = params.sort;
       if (params.productType) queryObj.product_type = params.productType;
       if (params.brand) queryObj.brand = params.brand;
-      if (params.priceMin) queryObj.price_min = params.priceMin;
-      if (params.priceMax) queryObj.price_max = params.priceMax;
-      if (params.inStock) queryObj.in_stock = params.inStock;
+      if (params.priceMin !== undefined) queryObj.price_min = params.priceMin.toString();
+      if (params.priceMax !== undefined) queryObj.price_max = params.priceMax.toString();
+      if (params.inStock !== undefined) queryObj.in_stock = params.inStock.toString();
+      if (params.limit !== undefined) queryObj.limit = params.limit.toString();
+      if (params.offset !== undefined) queryObj.offset = params.offset.toString();
 
       const query = new URLSearchParams(queryObj).toString();
-
       const response = await api.get(
-        `/api/subcategories/${params.subId}/products/?${query}`
+        `https://wzonllfccvmvoftahudd.supabase.co/functions/v1/get-products-with-subcategory?${query}`
       );
 
-      const products = response.data.results;
+      const products: Product[] = response.data.results ?? [];
 
-      // Extract dynamic filters from response
-      const brands = Array.from(
-        new Set(products.map((p: any) => p.brand).filter(Boolean))
-      ) as string[];
+      // Safely extract dynamic filters
+      const brands: string[] = Array.from(
+        new Set(products.map((p) => p.brand).filter(isString))
+      );
 
-      const productTypes = Array.from(
-        new Set(
-          products
-            .map((p: any) => p.extra_attributes?.type) // adjust if API uses different field
-            .filter(Boolean)
-        )
-      ) as string[];
+      const productTypes: string[] = Array.from(
+        new Set(products.map((p) => p.extra_attributes?.type).filter(isString))
+      );
 
       return { products, brands, productTypes };
-
     } catch (err: any) {
-      return rejectWithValue(err.response?.data?.detail || "Failed to fetch products");
+      return rejectWithValue(
+        err.response?.data?.detail || err.message || "Failed to fetch products"
+      );
     }
   }
 );

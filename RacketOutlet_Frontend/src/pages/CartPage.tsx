@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import TopBar from "../components/HomePage/TopBar";
 import Header from "../components/HomePage/Header";
 import BuyNowButton from "../components/ui/BuyNowButton";
+import Loader from "../components/Loader"; 
 
 const CartPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -16,7 +17,7 @@ const CartPage: React.FC = () => {
     dispatch(fetchCartThunk());
   }, [dispatch]);
 
-  if (loading) return <p className="text-center py-5">Loading cart...</p>;
+  if (loading) return <Loader />;
 
   const total =
     cart?.items?.reduce((sum, item) => sum + parseFloat(item.subtotal), 0) || 0;

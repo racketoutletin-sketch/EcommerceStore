@@ -17,11 +17,13 @@ const VideoCard: React.FC = () => {
   useEffect(() => {
     const fetchVideos = async () => {
       try {
-        const res = await api.get<{ results: HomeVideo[] }>("api/home-videos/");
-        setVideos(res.data.results);
+        const res = await api.get<{ videos: HomeVideo[] }>(
+          "https://wzonllfccvmvoftahudd.supabase.co/functions/v1/get-homepage-video"
+        );
+        setVideos(res.data.videos);
         // initialize all videos as playing
         const initialState: { [key: number]: boolean } = {};
-        res.data.results.forEach((vid) => (initialState[vid.id] = true));
+        res.data.videos.forEach((vid) => (initialState[vid.id] = true));
         setPlayingStates(initialState);
       } catch (err) {
         console.error("Error fetching videos:", err);
@@ -70,9 +72,8 @@ const VideoCard: React.FC = () => {
           >
             <video
               ref={(el) => {
-  videoRefs.current[index] = el;
-}}
-
+                videoRefs.current[index] = el;
+              }}
               src={vid.video_url || vid.video}
               className="absolute top-1/2 left-1/2 min-w-full min-h-[150vh] w-auto h-auto object-cover transform -translate-x-1/2 -translate-y-1/2 transition-transform duration-500 group-hover:scale-105"
               autoPlay
@@ -105,4 +106,4 @@ const VideoCard: React.FC = () => {
   );
 };
 
-export default VideoCard ;
+export default VideoCard;

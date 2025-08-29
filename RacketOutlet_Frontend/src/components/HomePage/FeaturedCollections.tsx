@@ -3,23 +3,6 @@ import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "../../api/axios";
 
-interface Product {
-  id: number;
-  name: string;
-  main_image: string;
-  description: string;
-  sub_category_name: string;
-}
-
-interface ApiResponse {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: {
-    id: number;
-    product: Product;
-  }[];
-}
 
 interface CollectionCardProps {
   title: string;
@@ -54,25 +37,31 @@ const FeaturedCollections: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchCollections = async () => {
-      try {
-        const res = await api.get<ApiResponse>("/api/featured-products/");
-        const mapped = res.data.results.map((item) => ({
-          title: item.product.sub_category_name,
-          desc: item.product.description,
-          img: item.product.main_image,
-          productId: item.product.id, // ✅ pass product id
-        }));
-        setCollections(mapped);
-      } catch (error) {
-        console.error("Error fetching collections:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchCollections = async () => {
+    try {
+      const res = await api.get(
+        "https://wzonllfccvmvoftahudd.supabase.co/functions/v1/get-homepage-featured-product"
+      );
 
-    fetchCollections();
-  }, []);
+      const mapped = res.data.featuredProducts.map((item: any) => ({
+        title: item.name,                      // ✅ product name
+        desc: item.description,                // ✅ product description
+        img: item.main_image_url,              // ✅ main image
+        productId: item.product_id,            // ✅ correct product id
+      }));
+
+      setCollections(mapped);
+    } catch (error) {
+      console.error("Error fetching collections:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchCollections();
+}, []);
+
+
 
   return (
     <div className="mb-8">

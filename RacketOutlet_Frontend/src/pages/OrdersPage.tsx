@@ -5,6 +5,7 @@ import { fetchOrders } from "../redux/features/orders/ordersthunks";
 import type { RootState, AppDispatch } from "../redux/store";
 import TopBar from "../components/HomePage/TopBar";
 import Header from "../components/HomePage/Header";
+import Loader from "../components/Loader"; 
 
 interface Product {
   name: string;
@@ -78,7 +79,7 @@ const OrdersPage = () => {
     }
   };
 
-  if (loading) return <p className="text-center text-blue-500 mt-10">Loading orders...</p>;
+  if (loading) return <Loader />;
   if (error) return <p className="text-center text-red-500 mt-10">Error: {error}</p>;
 
   return (

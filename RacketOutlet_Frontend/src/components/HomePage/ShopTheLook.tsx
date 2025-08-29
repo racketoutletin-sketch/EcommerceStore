@@ -4,8 +4,8 @@ import axios from "../../api/axios"; // your axios instance
 interface Product {
   id: number;
   name: string;
-  price: string;
-  main_image: string;
+  price: number; // should be number (API returns number, not string)
+  main_image_url: string;
   slug: string;
 }
 
@@ -29,10 +29,13 @@ const ShopTheLook = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   useEffect(() => {
-    axios.get("api/shop-the-look/").then((res) => {
-      const shopData = res.data.results[0];
+    axios.get("https://wzonllfccvmvoftahudd.supabase.co/functions/v1/get-homepage-data").then((res) => {
+      const shopData = res.data.shopTheLook[0]; // ✅ correct path
       setData(shopData);
-      if (shopData.hotspots.length > 0) setSelectedProduct(shopData.hotspots[0].product);
+
+      if (shopData.hotspots.length > 0) {
+        setSelectedProduct(shopData.hotspots[0].product);
+      }
     });
   }, []);
 
@@ -45,7 +48,7 @@ const ShopTheLook = () => {
         {/* Player Image with hotspots */}
         <div className="relative border border-gray-200 rounded-lg overflow-hidden md:col-span-3 h-[650px]">
           <img
-            src={data.player_image}
+            src={`https://wzonllfccvmvoftahudd.supabase.co/storage/v1/object/public/media/${data.player_image}`}
             alt="Player"
             className="w-full h-full object-cover"
           />
@@ -54,7 +57,7 @@ const ShopTheLook = () => {
             <div
               key={hotspot.id}
               onMouseEnter={() => setSelectedProduct(hotspot.product)}
-              className={`absolute w-4 h-4 bg-white border-2 border-black rounded-full cursor-pointer hover:scale-125 transition`}
+              className="absolute w-4 h-4 bg-white border-2 border-black rounded-full cursor-pointer hover:scale-125 transition"
               style={{
                 top: `${hotspot.top}px`,
                 left: hotspot.left ? `${hotspot.left}px` : undefined,
@@ -76,7 +79,7 @@ const ShopTheLook = () => {
           </span>
 
           <img
-            src={selectedProduct.main_image}
+            src={selectedProduct.main_image_url}
             alt={selectedProduct.name}
             className="w-full h-full object-cover mb-5 rounded"
           />

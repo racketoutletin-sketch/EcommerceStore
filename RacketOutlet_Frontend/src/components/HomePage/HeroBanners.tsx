@@ -1,7 +1,6 @@
 // src/components/HeroBanners.tsx
 import React, { useEffect, useState } from "react";
 import Slider from "react-slick";
-import api from "../../api/axios"; // ✅ axios instance
 import { useNavigate } from "react-router-dom";
 import "slick-carousel/slick/slick.css"; 
 import "slick-carousel/slick/slick-theme.css";
@@ -11,22 +10,29 @@ interface Banner {
   title: string;
   subtitle: string;
   image: string;
-  subcategory: number | null;
-  product: number | null;
+  subcategory_id: number | null;
+  product_id: number | null;
 }
 
 const HeroBanners: React.FC = () => {
   const [banners, setBanners] = useState<Banner[]>([]);
   const navigate = useNavigate();
 
-  // ✅ Fetch banners
+  // ✅ Fetch banners directly from Supabase Edge Function
   useEffect(() => {
-    api
-      .get("api/banners/")
-      .then((res) => {
-        setBanners(res.data.results || []);
-      })
-      .catch((err) => console.error("Error fetching banners:", err));
+    const fetchBanners = async () => {
+      try {
+        const res = await fetch(
+          "https://wzonllfccvmvoftahudd.supabase.co/functions/v1/get-banners"
+        );
+        const data = await res.json();
+        setBanners(data.banners || []);
+      } catch (err) {
+        console.error("Error fetching banners:", err);
+      }
+    };
+
+    fetchBanners();
   }, []);
 
   const settings = {
@@ -49,10 +55,10 @@ const HeroBanners: React.FC = () => {
 
   // ✅ Handle banner click
   const handleClick = (banner: Banner) => {
-    if (banner.product) {
-      navigate(`/products/${banner.product}`);
-    } else if (banner.subcategory) {
-      navigate(`/subcategories/${banner.subcategory}/products`);
+    if (banner.product_id) {
+      navigate(`/products/${banner.product_id}`);
+    } else if (banner.subcategory_id) {
+      navigate(`/subcategories/${banner.subcategory_id}`);
     }
   };
 
@@ -66,7 +72,8 @@ const HeroBanners: React.FC = () => {
             onClick={() => handleClick(banner)}
           >
             <img
-              src={banner.image}
+              // 👇 Supabase storage URL (fix if needed)
+              src={`https://wzonllfccvmvoftahudd.supabase.co/storage/v1/object/public/media/${banner.image}`}
               alt={banner.title}
               className="w-full h-full object-cover"
             />

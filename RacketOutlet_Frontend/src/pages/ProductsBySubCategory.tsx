@@ -1,4 +1,3 @@
-// ProductsBySubCategory.tsx
 import TopBar from "../components/HomePage/TopBar";
 import Header from "../components/HomePage/Header";
 import { useEffect, useState } from "react";
@@ -8,16 +7,15 @@ import type { AppDispatch, RootState } from "../redux/store";
 import { fetchProductsBySubCategory } from "../redux/features/products/productsListViewSlice";
 import { useDebounce } from "use-debounce";
 import ProductCard from "../components/ProductCard";
-import SubCatWithProductsSkeleton from "../components/Skeleton/SubCatWithProductsSkeleton";
+import Loader from "../components/Loader"; 
 
 const ProductsBySubCategory = () => {
   const { subId } = useParams<{ subId: string }>();
   const dispatch = useDispatch<AppDispatch>();
 
-  const { searchResults, availableBrands, availableProductTypes, loading, error } = useSelector(
-    (state: RootState) => state.productListView
-  );
-  console.log(searchResults)
+  const { searchResults, availableBrands, availableProductTypes, loading, error } =
+    useSelector((state: RootState) => state.productListView);
+    console.log(searchResults)
 
   const [filters, setFilters] = useState({
     sort: "",
@@ -32,7 +30,12 @@ const ProductsBySubCategory = () => {
 
   useEffect(() => {
     if (subId) {
-      dispatch(fetchProductsBySubCategory({ subId: Number(subId), ...debouncedFilters }));
+      dispatch(
+        fetchProductsBySubCategory({
+          subId: Number(subId),
+          ...debouncedFilters,
+        })
+      );
     }
   }, [subId, debouncedFilters, dispatch]);
 
@@ -40,21 +43,18 @@ const ProductsBySubCategory = () => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
-
-if (loading) {
-  return <SubCatWithProductsSkeleton subCount={3} productCount={8} />;
-}
+  if (loading) return  <Loader />;
   if (error) return <p className="text-red-500 text-center mt-6">{error}</p>;
-  if (!searchResults.length) return <p className="text-gray-500 text-center mt-6">No products found</p>;
+  if (!searchResults.length)
+    return <p className="text-gray-500 text-center mt-6">No products found</p>;
 
   return (
     <div className="w-full bg-gray-50 min-h-screen">
       <TopBar />
       <Header />
 
-<div className="w-full px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-
-        {/* Filters & Sort Horizontal Bar */}
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* Filters & Sort */}
         <div className="flex flex-wrap gap-4 bg-white p-4 rounded-2xl shadow-sm items-center">
           {/* Product Type */}
           <div>
@@ -66,7 +66,9 @@ if (loading) {
             >
               <option value="">All</option>
               {availableProductTypes.map((type) => (
-                <option key={type} value={type}>{type}</option>
+                <option key={type} value={type}>
+                  {type}
+                </option>
               ))}
             </select>
           </div>
@@ -81,7 +83,9 @@ if (loading) {
             >
               <option value="">All</option>
               {availableBrands.map((brand) => (
-                <option key={brand} value={brand}>{brand}</option>
+                <option key={brand} value={brand}>
+                  {brand}
+                </option>
               ))}
             </select>
           </div>
@@ -137,28 +141,25 @@ if (loading) {
             </select>
           </div>
         </div>
-        
-{/* Products Grid */}
-<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-  {searchResults.map((product: any) => (
-    <div
-      key={product.id}
-      className="w-full min-w-0 h-[25 rem] rounded-2xl overflow-hidden"
-    >
-      <ProductCard
-        id={product.id}
-        name={product.name}
-        description={product.description}
-        main_image={product.main_image}
-        price={Number(product.price)}
-        discounted_price={product.discounted_price ? Number(product.discounted_price) : undefined}
-        brand={product.brand}
-      />
-    </div>
-  ))}
-</div>
 
-
+        {/* Products Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {searchResults.map((product: any) => {
+            return (
+              <div key={product.id} className="w-full min-w-0 h-[25rem] rounded-2xl overflow-hidden">
+                <ProductCard
+                  id={product.id}
+                  name={product.name ?? ""}
+                  description={product.description ?? ""}
+                  main_image={product.main_image_url ?? ""}
+                  price={product.price ? Number(product.price) : 0}
+                  discounted_price={product.discounted_price ? Number(product.discounted_price) : undefined}
+                  brand={product.brand ?? ""}
+                />
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

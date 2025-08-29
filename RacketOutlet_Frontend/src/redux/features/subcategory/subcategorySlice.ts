@@ -49,7 +49,7 @@ export const fetchSubCategoriesByCategory = createAsyncThunk<
   "subcategories/fetchByCategory",
   async (categoryId, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/api/categories/${categoryId}/subcategories/`);
+      const response = await api.get(`https://wzonllfccvmvoftahudd.supabase.co/functions/v1/hyper-action?category_id=${categoryId}`);
       return { categoryId, results: response.data.results };
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.detail || "Failed to fetch subcategories");

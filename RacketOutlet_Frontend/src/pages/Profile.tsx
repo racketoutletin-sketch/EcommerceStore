@@ -7,6 +7,8 @@ import TopBar from "../components/HomePage/TopBar";
 import Header from "../components/HomePage/Header";
 import AboutRacketOutlet from "../components/HomePage/AboutRacketOutlet";
 import Footer from "../components/HomePage/Footer";
+import Loader from "../components/Loader"; 
+
 import {
   FaEnvelope,
   FaUser,
@@ -37,9 +39,7 @@ export default function Profile() {
 
   if (loading)
     return (
-      <PageWrapper>
-        <Message text="Loading profile..." color="blue" />
-      </PageWrapper>
+<Loader />
     );
 
   if (error)

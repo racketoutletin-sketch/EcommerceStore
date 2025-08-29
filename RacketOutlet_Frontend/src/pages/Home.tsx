@@ -14,8 +14,17 @@ import FeaturedCollections from "../components/HomePage/FeaturedCollections";
 import AboutRacketOutlet from "../components/HomePage/AboutRacketOutlet";
 import InfoCards from "../components/HomePage/InfoCards";
 import Footer from "../components/HomePage/Footer";
+import useInitAuth from "../hooks/useInitAuth";
+import usePreloadSubCategories from "../hooks/usePreloadSubCategories";
+import Loader from "../components/Loader"; 
+<Loader />
 
 const Home = () => {
+  useInitAuth();
+
+  // ✅ Start preloading in the background (does not block render)
+  const loadingSubCategories = usePreloadSubCategories();
+
   return (
     <div className="min-h-screen bg-white font-poppins">
       <TopBar />
@@ -30,7 +39,7 @@ const Home = () => {
         <CategoryIcons />
 
         {/* Video Section */}
-          <VideoCard/>
+        <VideoCard />
 
         {/* Featured Products & Highlights */}
         <FeaturedProduct />
@@ -44,13 +53,18 @@ const Home = () => {
         <FeaturedCollections />
 
         {/* About & Info */}
-<div id="about">
-  <AboutRacketOutlet />
-</div>
+        <div id="about">
+          <AboutRacketOutlet />
+        </div>
         <InfoCards />
       </main>
 
       <Footer />
+
+      {/* Optional background loader indicator */}
+      {loadingSubCategories && (
+<Loader />
+      )}
     </div>
   );
 };

@@ -7,8 +7,8 @@ import Profile from "./pages/Profile";
 import ProfileUpdate from "./pages/ProfileUpdate";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
-import useInitAuth from "./hooks/useInitAuth";
-import usePreloadSubCategories from "./hooks/usePreloadSubCategories";
+// import useInitAuth from "./hooks/useInitAuth";
+// import usePreloadSubCategories from "./hooks/usePreloadSubCategories";
 
 import SubCatWithProducts from "./pages/SubCatWithProducts";
 import ProductsBySubCategory from "./pages/ProductsBySubCategory";
@@ -23,20 +23,20 @@ import SearchResults from "./pages/SearchResults";
 
 import WishlistPage from "./pages/WishlistPage";
 
-import SubCatWithProductsSkeleton from "../src/components/Skeleton/SubCatWithProductsSkeleton";
-
+// import SubCatWithProductsSkeleton from "../src/components/Skeleton/SubCatWithProductsSkeleton";
+// 
 import './App.css';
 
 export default function App() {
-  useInitAuth();
+//   useInitAuth();
 
-  // ✅ Preload all subcategories before rendering routes
-  const loadingSubCategories = usePreloadSubCategories();
+//   // ✅ Preload all subcategories before rendering routes
+//   const loadingSubCategories = usePreloadSubCategories();
 
 
-if (loadingSubCategories) {
-  return <SubCatWithProductsSkeleton subCount={3} productCount={8} />;
-}
+// if (loadingSubCategories) {
+//   return <SubCatWithProductsSkeleton subCount={3} productCount={8} />;
+// }
 
   return (
     <Router>

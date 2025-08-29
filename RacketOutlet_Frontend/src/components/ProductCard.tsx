@@ -11,7 +11,7 @@ import CartButton from "../components/ui/CartButton";
 interface ProductCardProps {
   id: number;
   name: string;
-  description: string;
+  description?: string;
   main_image?: string | null;
   price: number;
   discounted_price?: number | null;

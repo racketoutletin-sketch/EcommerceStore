@@ -1,9 +1,5 @@
 // src/components/Header.tsx
 import { Link, useNavigate } from "react-router-dom";
-import { useAppSelector, useAppDispatch } from "../../redux/store";
-import { logout } from "../../redux/features/auth/authSlice";
-import { clearProfile } from "../../redux/features/user/userSlice";
-import { fetchCategories } from "../../redux/features/categories/categoriesSlice";
 import { useEffect, useState, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -17,18 +13,38 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 const Header: React.FC = () => {
-  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const { accessToken } = useAppSelector((s) => s.auth);
-  const { categories, loading } = useAppSelector((s) => s.categories);
+  // Simulating auth state – replace with your Redux selector
+  const accessToken = localStorage.getItem("access_token");
 
   useEffect(() => {
-    dispatch(fetchCategories());
-  }, [dispatch]);
+    const fetchCategories = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(
+          "https://wzonllfccvmvoftahudd.supabase.co/functions/v1/get-featured-categories"
+        );
+
+        if (!res.ok) throw new Error("Failed to fetch categories");
+
+        const data = await res.json();
+        setCategories(data.featured_categories || []); // 👈 adjust based on your API response shape
+      } catch (err) {
+        console.error(err);
+        setCategories([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -42,8 +58,7 @@ const Header: React.FC = () => {
   }, []);
 
   const handleLogout = () => {
-    dispatch(logout());
-    dispatch(clearProfile());
+    localStorage.removeItem("accessToken"); // replace with Redux logout if needed
     navigate("/login");
   };
 

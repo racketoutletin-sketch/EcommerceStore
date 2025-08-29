@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../redux/store";
 import { fetchProfile, updateProfile } from "../redux/features/user/userThunks";
 import { useNavigate } from "react-router-dom";
+import Loader from "../components/Loader"; 
 
 export default function ProfileUpdate() {
   const dispatch = useAppDispatch();
@@ -88,7 +89,7 @@ export default function ProfileUpdate() {
           </div>
 
           {error && <p className="text-red-500 text-center">{error}</p>}
-          {loading && <p className="text-blue-500 text-center">Updating...</p>}
+          {loading && <Loader />}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Profile Preview */}

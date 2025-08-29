@@ -33,22 +33,26 @@ const FeaturedProduct = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchExclusiveProduct = async () => {
-      try {
-        const res = await api.get<{ results: ExclusiveProduct[] }>("api/exclusive-products/");
-        if (res.data.results.length > 0) {
-          const prod = res.data.results[0];
-          setProduct(prod);
-          setMainImage(prod.product?.main_image || null);
-        }
-      } catch (err) {
-        console.error("Error fetching featured product:", err);
-      } finally {
-        setLoading(false);
+  const fetchExclusiveProduct = async () => {
+    try {
+      const res = await api.get<{ exclusiveProducts: ExclusiveProduct[] }>(
+        "https://wzonllfccvmvoftahudd.supabase.co/functions/v1/get-homepage-exclusive-products"
+      );
+
+      if (res.data.exclusiveProducts.length > 0) {
+        const prod = res.data.exclusiveProducts[0];
+        setProduct(prod);
+        setMainImage(prod.product?.main_image || null);
       }
-    };
-    fetchExclusiveProduct();
-  }, []);
+    } catch (err) {
+      console.error("Error fetching featured product:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchExclusiveProduct();
+}, []);
+
 
   if (loading) {
     return (

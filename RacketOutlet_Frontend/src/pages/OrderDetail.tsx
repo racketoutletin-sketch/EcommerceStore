@@ -5,6 +5,8 @@ import { fetchOrderById, clearOrderDetail } from "../redux/features/orders/order
 import type { RootState, AppDispatch } from "../redux/store";
 import TopBar from "../components/HomePage/TopBar";
 import Header from "../components/HomePage/Header";
+import Loader from "../components/Loader"; 
+
 
 // ✅ Utility to safely format price values
 const formatPrice = (value: string | number | null | undefined): string => {
@@ -36,7 +38,7 @@ const OrderDetailPage = () => {
     }
   };
 
-  if (loading) return <p className="text-center text-blue-500 mt-10">Loading order...</p>;
+  if (loading) return <Loader />;
   if (error) return <p className="text-center text-red-500 mt-10">Error: {error}</p>;
   if (!order) return null;
 
