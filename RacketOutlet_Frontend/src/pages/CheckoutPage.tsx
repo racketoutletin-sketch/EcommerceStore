@@ -8,6 +8,9 @@ import { removeMultipleCartItemsThunk } from "../redux/features/cart/cartThunks"
 import TopBar from "../components/HomePage/TopBar";
 import Header from "../components/HomePage/Header";
 import BuyNowButton from "../components/ui/BuyNowButton";
+import { useNavigate } from "react-router-dom";
+
+const navigate = useNavigate();
 
 interface DirectItem {
   id: number;
@@ -117,7 +120,7 @@ const CheckoutPage: React.FC = () => {
             });
             alert("Payment successful!");
             handleRemoveCartItems(orderedItemIds);
-            window.location.href = `/orders`;
+            navigate(`/orders/${order.id}`);
           } catch (err: any) {
             console.error(err);
             await api.post(`/api/orders/${order.id}/payment/fail/`);
@@ -128,7 +131,7 @@ const CheckoutPage: React.FC = () => {
           ondismiss: async () => {
             await api.post(`/api/orders/${order.id}/payment/cancel/`);
             alert("Payment cancelled.");
-            window.location.href = itemIds.length > 0 ? `/cart` : "/";
+            navigate(itemIds.length > 0 ? `/cart` : `/`);
           },
         },
       };
