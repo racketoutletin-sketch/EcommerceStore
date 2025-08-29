@@ -10,7 +10,7 @@ import Header from "../components/HomePage/Header";
 import BuyNowButton from "../components/ui/BuyNowButton";
 import { useNavigate } from "react-router-dom";
 
-const navigate = useNavigate();
+
 
 interface DirectItem {
   id: number;
@@ -35,6 +35,7 @@ interface SelectedItem {
 }
 
 const CheckoutPage: React.FC = () => {
+  const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
 
