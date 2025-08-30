@@ -27,7 +27,7 @@ const OrderItemCard = ({ product, quantity, subtotal }: OrderItemProps) => {
   return (
     <div className="flex border p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow gap-3 bg-white">
       <img
-        src={product.main_image || "/placeholder.png"}
+        src={product.main_image || "/default.png"}
         alt={product.name}
         className="w-20 h-20 object-cover rounded-lg"
       />

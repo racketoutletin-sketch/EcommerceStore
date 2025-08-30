@@ -43,9 +43,11 @@ const OrderDetailPage = () => {
   if (!order) return null;
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="w-full bg-gray-50 min-h-screen">
       <TopBar />
       <Header />
+    <div className="container mx-auto p-4">
+
       <Link to="/orders" className="text-blue-500 hover:underline mb-4 inline-block">
         &larr; Back to Orders
       </Link>
@@ -90,6 +92,8 @@ const OrderDetailPage = () => {
         </div>
       </div>
     </div>
+    </div>
+
   );
 };
 

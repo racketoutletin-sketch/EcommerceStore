@@ -9,7 +9,7 @@ import { fetchSubCategoriesByCategory } from "../redux/features/subcategory/subc
 import ProductCard from "../components/ProductCard";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
   // --- Loading / error / empty states ---
-import SubCatWithProductsSkeleton from "../components/Skeleton/SubCatWithProductsSkeleton";
+import Loader from "../components/Loader";
 import WaveButton from "../components/ui/AnimatedButton";
 
 const SubCatWithProducts = () => {
@@ -87,7 +87,7 @@ const SubCatWithProducts = () => {
 
 
 if (isLoading && !subcategories.length) {
-  return <SubCatWithProductsSkeleton subCount={3} productCount={8} />;
+  return <Loader />;
 }
   if (fetchError)
     return <p className="text-red-500 text-center mt-6">{fetchError}</p>;

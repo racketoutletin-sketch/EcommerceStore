@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "../redux/store";
+import Loader from "../components/Loader";
 import {
   fetchWishlistThunk,
   removeWishlistItemThunk,
@@ -33,7 +34,7 @@ const Wishlist: React.FC = () => {
   };
 
   if (loading)
-    return <p className="text-center mt-8 text-blue-500">Loading...</p>;
+    return <Loader />;
   if (error)
     return (
       <p className="text-center mt-8 text-red-500">Error: {error}</p>

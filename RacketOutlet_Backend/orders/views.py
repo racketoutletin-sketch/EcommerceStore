@@ -324,11 +324,16 @@ def confirm_cod(request, order_id):
 
     return Response({"detail": "COD confirmed successfully"}, status=status.HTTP_200_OK)
 
-
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from .models import Order
 from .serializers import OrderSerializer, CreateOrderSerializer
+from django.core.cache import cache
+from django.core.cache.utils import make_template_fragment_key
+
+CACHE_TTL = 3600  # seconds
 
 class OrderListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -340,11 +345,19 @@ class OrderListCreateView(generics.ListCreateAPIView):
         user = self.request.user
         return Order.objects.all() if user.is_staff else Order.objects.filter(user=user)
 
+    @method_decorator(cache_page(CACHE_TTL))
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
+        order = serializer.save()
 
-        order = serializer.save()  # CreateOrderSerializer.create() handles items
+        # Delete cache for this user’s order list page
+        list_url = request.path  # the URL that was cached
+        cache_key = f"views.decorators.cache.cache_page.{list_url}"
+        cache.delete(cache_key)
 
         return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
 
@@ -355,6 +368,11 @@ class OrderDetailView(generics.RetrieveUpdateAPIView):
     def get_queryset(self):
         user = self.request.user
         return Order.objects.all() if user.is_staff else Order.objects.filter(user=user)
+    
+    @method_decorator(cache_page(CACHE_TTL))
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
 import razorpay
 from rest_framework.views import APIView
 from rest_framework.response import Response
