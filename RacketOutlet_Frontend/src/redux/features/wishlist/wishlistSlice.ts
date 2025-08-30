@@ -1,24 +1,26 @@
 // wishlistSlice.ts
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
-
-
 import api from "../../../api/axios";
 
 // ----------------- Types -----------------
+// wishlistSlice.ts
+// wishlistSlice.ts
+
 export interface WishlistItem {
-  id: number;
-  product?: { // make optional to handle undefined safely
-    id: number;
-    name: string;
-    main_image: string;
-    price: number;
-    discounted_price?: number;
-    brand: string;
-    description: string;
-  };
-  added_at: string;
+  id: number
+  product: {
+    id: number
+    name: string
+    main_image_url: string
+    price: number
+    discounted_price?: number | null
+    brand?: string | null   // 👈 allow undefined as well
+    description: string
+  }
+    added_at: string; // 👈 added here
 }
+
 
 interface WishlistState {
   items: WishlistItem[];

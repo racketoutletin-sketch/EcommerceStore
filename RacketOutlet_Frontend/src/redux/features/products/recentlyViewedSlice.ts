@@ -7,9 +7,9 @@ export interface Product {
   id: number;
   name: string;
   description: string;
-  main_image?: string | null;
-  current_price: number;
-  discounted_price?: number | null;
+  main_image_url?: string | null;
+  price: number; // original price
+  discounted_price?: number | null; // discounted price
   brand?: string | null;
 }
 

@@ -4,14 +4,16 @@ import api from "../../../api/axios";
 interface Product {
   id: number;
   name: string;
+  slug: string;
+  brand: string | null;
   price: number;
-  discounted_price?: number;
   current_price: number;
-  brand: string;
-  extra_attributes?: { type?: string };
-  quantity: number;
-  description?:string;
+  discounted_price?: number | null;
+  images?: string[];
   main_image?: string | null;
+  quantity: number;
+  description?: string;
+  extra_attributes?: { type?: string } | null;
 }
 
 interface ProductListState {
@@ -30,10 +32,10 @@ const initialState: ProductListState = {
   error: null,
 };
 
-// Type guard to ensure a value is a string
+// Type guard
 const isString = (value: unknown): value is string => typeof value === "string";
 
-// Async thunk to fetch products by subcategory with filters & sorting
+// Thunk
 export const fetchProductsBySubCategory = createAsyncThunk(
   "productListView/fetchBySubCategory",
   async (
@@ -58,11 +60,16 @@ export const fetchProductsBySubCategory = createAsyncThunk(
       if (params.sort) queryObj.sort = params.sort;
       if (params.productType) queryObj.product_type = params.productType;
       if (params.brand) queryObj.brand = params.brand;
-      if (params.priceMin !== undefined) queryObj.price_min = params.priceMin.toString();
-      if (params.priceMax !== undefined) queryObj.price_max = params.priceMax.toString();
-      if (params.inStock !== undefined) queryObj.in_stock = params.inStock.toString();
-      if (params.limit !== undefined) queryObj.limit = params.limit.toString();
-      if (params.offset !== undefined) queryObj.offset = params.offset.toString();
+      if (params.priceMin !== undefined)
+        queryObj.price_min = params.priceMin.toString();
+      if (params.priceMax !== undefined)
+        queryObj.price_max = params.priceMax.toString();
+      if (params.inStock !== undefined)
+        queryObj.in_stock = params.inStock.toString();
+      if (params.limit !== undefined)
+        queryObj.limit = params.limit.toString();
+      if (params.offset !== undefined)
+        queryObj.offset = params.offset.toString();
 
       const query = new URLSearchParams(queryObj).toString();
       const response = await api.get(
@@ -71,7 +78,6 @@ export const fetchProductsBySubCategory = createAsyncThunk(
 
       const products: Product[] = response.data.results ?? [];
 
-      // Safely extract dynamic filters
       const brands: string[] = Array.from(
         new Set(products.map((p) => p.brand).filter(isString))
       );

@@ -4,31 +4,47 @@ import api from "../../../api/axios";
 // --- Types ---
 export interface ProductImage {
   id: number;
-  image?: string | null;
+  image_url: string;
   alt_text?: string | null;
   is_primary: boolean;
+}
+
+export interface Inventory {
+  quantity: number;
+  low_stock_threshold: number;
+  last_restocked_at: string;
+  is_low_stock: boolean;
 }
 
 export interface ProductDetailType {
   id: number;
   name: string;
-  description?: string | null;
-  main_image?: string | null;
-  images?: ProductImage[];
-  price: string;
-  discounted_price?: string | null;
+  slug: string;
+  description: string;
+  price: number;
+  discounted_price?: number | null;
+  sku: string;
   brand?: string | null;
-  sub_category_id?: number;
-  is_featured?: boolean;
-  is_deal_of_the_day?: boolean;
-  is_exclusive_product?: boolean;
+  weight?: number | null;
+  dimensions?: string | null;
+  material?: string | null;
+  main_image_url: string;
+  extra_attributes?: any;
+  is_featured: boolean;
+  is_deal_of_the_day: boolean;
+  is_exclusive_product: boolean;
+  is_active: boolean;
+  subcategory_id: number;
+  sub_category_name: string;
+  images: ProductImage[];
+  inventory: Inventory;
 }
 
 export interface CarouselProduct {
   id: number;
   name: string;
   description: string;
-  main_image: string;
+  main_image_url: string;
   current_price: number;
   discounted_price?: number;
   brand: string;
@@ -58,8 +74,8 @@ const initialState: ProductState = {
 // --- Async Thunks ---
 // Fetch single product by ID
 export const fetchProductById = createAsyncThunk<
-  ProductDetailType, // return type
-  number,            // argument type
+  ProductDetailType,
+  number,
   { rejectValue: string }
 >(
   "products/fetchById",
@@ -70,7 +86,9 @@ export const fetchProductById = createAsyncThunk<
       );
       return response.data as ProductDetailType;
     } catch (err: any) {
-      return rejectWithValue(err.response?.data?.detail || "Failed to fetch product");
+      return rejectWithValue(
+        err.response?.data?.detail || "Failed to fetch product"
+      );
     }
   }
 );

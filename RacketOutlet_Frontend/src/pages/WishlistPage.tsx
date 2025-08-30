@@ -62,7 +62,7 @@ const Wishlist: React.FC = () => {
                 className="cursor-pointer"
               >
                 <img
-                  src={item.product?.main_image || "/placeholder.png"}
+                  src={item.product?.main_image_url || "/placeholder.png"}
                   alt={item.product?.name || "Product image"}
                   className="w-full h-48 object-cover rounded-lg"
                 />
