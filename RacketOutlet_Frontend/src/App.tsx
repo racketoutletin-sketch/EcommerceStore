@@ -18,22 +18,20 @@ import OrderDetailPage from "./pages/OrderDetail";
 import SearchResults from "./pages/SearchResults";
 import WishlistPage from "./pages/WishlistPage";
 import Loader from "./components/Loader";
-import { SpeedInsights } from "@vercel/speed-insights/next"
+import { SpeedInsights } from "@vercel/speed-insights/react";
+import { Analytics } from "@vercel/analytics/react";
 
-import './App.css';
+import "./App.css";
 
 export default function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // simulate loading for 3 sec
     const timer = setTimeout(() => setLoading(false), 3000);
     return () => clearTimeout(timer);
   }, []);
 
-  if (loading) {
-    return <Loader />;
-  }
+  if (loading) return <Loader />;
 
   return (
     <Router>
@@ -44,23 +42,20 @@ export default function App() {
           <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/profile/update" element={<ProtectedRoute><ProfileUpdate /></ProtectedRoute>} />
-
           <Route path="/subcategories/:id" element={<SubCatWithProducts />} />
           <Route path="/subcategories/:subId/products" element={<ProductsBySubCategory />} />
           <Route path="/products/:productId" element={<ProductDetail />} />
           <Route path="/search" element={<SearchResults />} />
-          <Route path="/_vercel/speed-insights/*" element={<SpeedInsights />} />
-
-          
-
           <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
           <Route path="/wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
           <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
           <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
           <Route path="/orders/:id" element={<ProtectedRoute><OrderDetailPage /></ProtectedRoute>} />
-
           <Route path="*" element={<PublicRoute><Home /></PublicRoute>} />
         </Routes>
+
+        <Analytics />
+        <SpeedInsights />
       </div>
     </Router>
   );
