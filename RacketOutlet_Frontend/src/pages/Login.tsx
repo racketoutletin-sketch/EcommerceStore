@@ -28,11 +28,9 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* TopBar and Header stay at the top */}
       <TopBar />
       <Header />
 
-      {/* Centered Login Card */}
       <div className="flex-grow flex justify-center items-center px-4">
         <div className="w-full max-w-md bg-white rounded-4xl p-8">
           <h2 className="text-5xl font-bold text-center mb-6 text-gray-800">Welcome Back</h2>
@@ -64,6 +62,13 @@ export default function Login() {
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                 required
               />
+              {/* Forgot Password Link */}
+              <p
+                onClick={() => navigate("/forgot-password")}
+                className="mt-2 text-right text-sm text-black cursor-pointer hover:underline"
+              >
+                Forgot Password?
+              </p>
             </div>
 
             <button

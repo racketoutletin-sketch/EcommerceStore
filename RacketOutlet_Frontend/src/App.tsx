@@ -19,6 +19,9 @@ import SearchResults from "./pages/SearchResults";
 import WishlistPage from "./pages/WishlistPage";
 import Loader from "./components/Loader";
 import "./App.css";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import ChangePassword from "./pages/ChangePassword";
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -37,6 +40,9 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+          <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
+          <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
+          <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/profile/update" element={<ProtectedRoute><ProfileUpdate /></ProtectedRoute>} />
           <Route path="/subcategories/:id" element={<SubCatWithProducts />} />

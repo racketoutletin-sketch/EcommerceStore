@@ -108,14 +108,24 @@ export default function Profile() {
                   </ul>
                 </div>
               )}
+{/* Edit & Change Password Buttons */}
+<div className="flex flex-row gap-4 justify-center flex-wrap">
+  <button
+    onClick={() => navigate("/profile/update")}
+    className="bg-black text-white py-2 px-6 rounded-xl font-semibold hover:bg-white hover:text-black border border-black transition-colors shadow hover:shadow-lg"
+  >
+    Edit Profile
+  </button>
 
-            {/* Edit Button */}
-            <button
-              onClick={() => navigate("/profile/update")}
-              className="bg-black text-white py-2 px-8 rounded-xl font-semibold hover:bg-white hover:text-black border border-black transition-colors shadow hover:shadow-lg"
-            >
-              Edit Profile
-            </button>
+  <button
+    onClick={() => navigate("/change-password")}
+    className="bg-black text-white py-2 px-6 rounded-xl font-semibold hover:bg-white hover:text-black border border-black transition-colors shadow hover:shadow-lg"
+  >
+    Change Password
+  </button>
+</div>
+
+
           </div>
         </div>
       </div>

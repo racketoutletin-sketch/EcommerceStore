@@ -91,3 +91,34 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'preferences'
         ]
 
+from rest_framework import serializers
+from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
+
+User = get_user_model()
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True, write_only=True, style={'input_type': 'password'})
+    new_password = serializers.CharField(required=True, write_only=True, style={'input_type': 'password'})
+
+    def validate_new_password(self, value):
+        validate_password(value)
+        return value
+
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.core.mail import send_mail
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+class SetNewPasswordSerializer(serializers.Serializer):
+    new_password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+    uidb64 = serializers.CharField()
+    token = serializers.CharField()
+
+    def validate_new_password(self, value):
+        validate_password(value)
+        return value
+
