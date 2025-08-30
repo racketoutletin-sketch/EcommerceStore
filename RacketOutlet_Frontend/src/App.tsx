@@ -18,9 +18,6 @@ import OrderDetailPage from "./pages/OrderDetail";
 import SearchResults from "./pages/SearchResults";
 import WishlistPage from "./pages/WishlistPage";
 import Loader from "./components/Loader";
-import { SpeedInsights } from "@vercel/speed-insights/react";
-import { Analytics } from "@vercel/analytics/react";
-
 import "./App.css";
 
 export default function App() {
@@ -53,9 +50,6 @@ export default function App() {
           <Route path="/orders/:id" element={<ProtectedRoute><OrderDetailPage /></ProtectedRoute>} />
           <Route path="*" element={<PublicRoute><Home /></PublicRoute>} />
         </Routes>
-
-        <Analytics />
-        <SpeedInsights />
       </div>
     </Router>
   );
