@@ -65,15 +65,14 @@ const Footer = () => {
             </ul>
             <h3 className="font-semibold text-lg mt-4 mb-2">MAILING ADDRESS</h3>
             <p className="text-gray-300 text-sm">
-              Bitsport Private Limited <br />
-              25/1A, 1st Cross Rd, near Wipro Office, Halanayakanahalli, Bengaluru, Karnataka 560035
+              RACKETEK SPORTS PRIVATE LIMITED <br />
+              #61 VISHNUNIVASA, 12th Main 2nd Cross Jubilee college road,NRI layout (Kalkere)Horamavu post,Bengaluru-560113.
             </p>
             <h3 className="font-semibold text-lg mt-4 mb-2">SUPPORT</h3>
             <p className="text-gray-300 text-sm">
               Track Your Order <br />
-              General Queries: 9164412977 <br />
-              Order Support: 9108872097 <br />
-              10 AM to 6 PM (Monday to Saturday)
+              General Queries: racketoutlet.in@gmail.com <br />
+              10 AM to 6 PM (Monday to Friday)
             </p>
           </div>
         </div>

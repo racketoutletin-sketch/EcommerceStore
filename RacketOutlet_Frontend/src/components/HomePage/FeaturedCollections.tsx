@@ -21,7 +21,15 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
     to={`/products/${productId}`}
     className="group border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition p-4 block"
   >
-    <img src={img} alt={title} className="w-full h-48 object-cover" />
+    <img
+      src={img || "/default.png"}
+      alt={title}
+      className="w-full h-48 object-cover"
+      onError={(e) => {
+        (e.currentTarget as HTMLImageElement).src = "/default.png";
+      }}
+    />
+
     <div className="p-3">
       <h3 className="text-black font-semibold text-base">{title}</h3>
       <p className="text-gray-500 text-sm mb-2 line-clamp-2">{desc}</p>

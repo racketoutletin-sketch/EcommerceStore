@@ -79,10 +79,14 @@ const ShopTheLook = () => {
           </span>
 
           <img
-            src={selectedProduct.main_image_url}
+            src={selectedProduct.main_image_url || '/default.png'}
             alt={selectedProduct.name}
             className="w-full h-full object-cover mb-5 rounded"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).src = '/default.png';
+            }}
           />
+
           <h3 className="text-sm font-medium">{selectedProduct.name}</h3>
           <p className="text-xs text-gray-500">₹{selectedProduct.price}</p>
           <button className="mt-auto bg-black text-white text-xs py-1 px-3 rounded">

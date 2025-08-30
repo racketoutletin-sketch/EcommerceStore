@@ -72,26 +72,32 @@ const FeaturedProduct = () => {
     <div className="bg-white p-8 rounded-lg max-w-7xl mx-auto mt-16 mb-16 min-h-[600px] grid grid-cols-1 md:grid-cols-2 gap-12">
       {/* Left: Image Carousel */}
       <div className="flex flex-col w-full h-full">
-        {mainImage && (
-          <img
-            src={mainImage}
-            alt={product.product.name}
-            className="w-full h-full object-cover rounded-lg mb-4"
-          />
-        )}
-        <div className="flex space-x-2">
-          {images.map((img, idx) => (
-            <img
-              key={idx}
-              src={img}
-              alt={`Thumbnail ${idx}`}
-              className={`w-20 h-20 object-cover rounded-lg cursor-pointer border ${
-                mainImage === img ? "border-black" : "border-gray-300"
-              }`}
-              onClick={() => setMainImage(img)}
-            />
-          ))}
-        </div>
+{mainImage && (
+  <img
+    src={mainImage}
+    alt={product.product.name}
+    className="w-full h-full object-cover rounded-lg mb-4"
+    onError={(e) => {
+      (e.currentTarget as HTMLImageElement).src = '/default.png';
+    }}
+  />
+)}
+<div className="flex space-x-2">
+  {images.map((img, idx) => (
+    <img
+      key={idx}
+      src={img}
+      alt={`Thumbnail ${idx}`}
+      className={`w-20 h-20 object-cover rounded-lg cursor-pointer border ${
+        mainImage === img ? "border-black" : "border-gray-300"
+      }`}
+      onClick={() => setMainImage(img)}
+      onError={(e) => {
+        (e.currentTarget as HTMLImageElement).src = '/default.png';
+      }}
+    />
+  ))}
+</div>
       </div>
 
       {/* Right: Product Details */}
@@ -144,7 +150,10 @@ const FeaturedProduct = () => {
               ))}
             </div>
           </div>
+          <span className="text-sm text-gray-500">{product.product.description}</span>
         </div>
+
+        
 
         {/* Buttons */}
         <div className="flex space-x-4 mt-4">

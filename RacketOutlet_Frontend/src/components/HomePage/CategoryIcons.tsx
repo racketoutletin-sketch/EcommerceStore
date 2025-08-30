@@ -33,7 +33,7 @@ const CategoryIcons = () => {
             {/* Image Box */}
             <div className="bg-gray-100 shadow-md hover:shadow-xl transition-shadow rounded-xl w-full h-64 overflow-hidden">
               <img
-                src={cat.image || "/CategoryIcons/default.png"} // ✅ direct field
+                src={cat.image || "/default.png"} // ✅ direct field
                 alt={cat.name}
                 className="w-auto max-h-full mx-auto object-contain transition-transform duration-300 transform group-hover:scale-105"
               />
