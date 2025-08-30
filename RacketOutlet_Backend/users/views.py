@@ -131,7 +131,7 @@ class PasswordResetRequestView(APIView):
         send_mail(
             "Password Reset Request",
             f"Click the link to reset your password: {reset_url}",
-            settings.DEFAULT_FROM_EMAIL,
+            os.getenv("DEFAULT_FROM_EMAIL"),
             [user.email],
             fail_silently=False
         )
