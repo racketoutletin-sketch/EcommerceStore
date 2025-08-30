@@ -203,16 +203,18 @@ const ProductDetail: React.FC = () => {
       <TopBar />
       <Header />
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8 space-y-12">
-        <ProductInfo
-          productDetail={productDetail}
-          cartItem={cartItem}
-          wishlisted={wishlisted}
-          loading={loading}
-          handleBuyNow={handleBuyNow}
-          handleToggleWishlist={handleToggleWishlist}
-          handleAddToCart={handleAddToCart}
-          removeCartItem={(id) => dispatch(removeCartItemThunk(id))}
-        />
+<ProductInfo
+  productDetail={productDetail}
+  cartItem={cartItem}
+  wishlisted={wishlisted}
+  loading={loading}
+  user={user}  // ✅ add this line
+  handleBuyNow={handleBuyNow}
+  handleToggleWishlist={handleToggleWishlist}
+  handleAddToCart={handleAddToCart}
+  removeCartItem={(id) => dispatch(removeCartItemThunk(id))}
+/>
+
 
         {filteredSimilar.length > 0 && (
           <ProductCarousel

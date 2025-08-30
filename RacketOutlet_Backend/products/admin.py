@@ -6,10 +6,11 @@ from .models import Category, SubCategory, Product, ProductImage, Inventory
 # ---------------------------
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'is_active', 'created_at', 'updated_at')  # removed 'parent'
+    list_display = ('name', 'is_active', 'created_at', 'updated_at')
     list_filter = ('is_active',)
     search_fields = ('name', 'description')
     ordering = ('name',)
+
 
 # ---------------------------
 # SubCategory Admin
@@ -21,6 +22,12 @@ class SubCategoryAdmin(admin.ModelAdmin):
     search_fields = ('name', 'description')
     ordering = ('name',)
 
+    # Optimize query by using select_related
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('parent_category')
+
+
 # ---------------------------
 # Product Admin
 # ---------------------------
@@ -30,11 +37,19 @@ class ProductAdmin(admin.ModelAdmin):
     list_filter = ('subcategory', 'is_featured', 'is_active')
     search_fields = ('name', 'sku', 'brand')
     ordering = ('name',)
+    list_per_page = 50  # Pagination to improve loading time
+
+    # Optimize query for related fields
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('subcategory', 'subcategory__parent_category')
 
     def subcategory_name(self, obj):
         """Show Category -> SubCategory for admin display"""
+        # Already optimized by select_related
         return f"{obj.subcategory.parent_category.name} -> {obj.subcategory.name}"
     subcategory_name.short_description = 'Category'
+
 
 # ---------------------------
 # ProductImage Admin
@@ -46,6 +61,11 @@ class ProductImageAdmin(admin.ModelAdmin):
     search_fields = ('product__name', 'alt_text')
     ordering = ('product',)
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('product')
+
+
 # ---------------------------
 # Inventory Admin
 # ---------------------------
@@ -55,6 +75,11 @@ class InventoryAdmin(admin.ModelAdmin):
     list_filter = ('product',)
     search_fields = ('product__name',)
     ordering = ('product',)
+    list_per_page = 50
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('product')
 
     def is_low_stock_display(self, obj):
         return obj.is_low_stock

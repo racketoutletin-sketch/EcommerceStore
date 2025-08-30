@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import BuyNowButton from "./ui/BuyNowButton";
 import CartButton from "./ui/CartButton";
 
@@ -7,6 +8,7 @@ interface ProductInfoProps {
   cartItem: any;
   wishlisted: boolean;
   loading: boolean;
+  user: any;
   handleBuyNow: (e: React.MouseEvent) => void;
   handleToggleWishlist: () => void;
   handleAddToCart: (quantity?: number) => void;
@@ -18,11 +20,22 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
   cartItem,
   wishlisted,
   loading,
+  user,
   handleBuyNow,
   handleToggleWishlist,
   handleAddToCart,
   removeCartItem,
 }) => {
+  const navigate = useNavigate();
+
+  const redirectIfNotLoggedIn = () => {
+    if (!user) {
+      navigate("/login");
+      return false;
+    }
+    return true;
+  };
+
   return (
     <div className="bg-white p-6 rounded-2xl shadow-lg">
       <div className="flex flex-col lg:flex-row gap-8">
@@ -74,29 +87,33 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
             </p>
           )}
 
+          {/* Action Buttons */}
           <div className="flex items-center gap-4 mt-4">
-            <BuyNowButton onClick={handleBuyNow}>Buy Now</BuyNowButton>
+            {/* Buy Now */}
+            <BuyNowButton
+              onClick={(e) => redirectIfNotLoggedIn() && handleBuyNow(e)}
+            >
+              Buy Now
+            </BuyNowButton>
 
+            {/* Wishlist */}
             <button
-              onClick={handleToggleWishlist}
+              onClick={() => redirectIfNotLoggedIn() && handleToggleWishlist()}
               className={`py-2 px-4 rounded border ${
-                wishlisted
-                  ? "bg-red-500 text-white"
-                  : "bg-white text-gray-700"
+                wishlisted ? "bg-red-500 text-white" : "bg-white text-gray-700"
               } hover:bg-gray-100`}
             >
               {wishlisted ? "❤️ Wishlisted" : "♡ Wishlist"}
             </button>
 
+            {/* Cart */}
             {cartItem ? (
               <div className="flex items-center border rounded">
                 <button
                   onClick={() => {
-                    if (cartItem.quantity === 1) {
-                      removeCartItem(cartItem.id);
-                    } else {
-                      handleAddToCart(cartItem.quantity - 1);
-                    }
+                    if (!redirectIfNotLoggedIn()) return;
+                    if (cartItem.quantity === 1) removeCartItem(cartItem.id);
+                    else handleAddToCart(cartItem.quantity - 1);
                   }}
                   className="px-3 py-1 text-gray-700 hover:bg-gray-100 disabled:opacity-50"
                   disabled={loading}
@@ -105,14 +122,20 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                 </button>
                 <span className="px-4 py-1">{cartItem.quantity}</span>
                 <button
-                  onClick={() => handleAddToCart(cartItem.quantity + 1)}
+                  onClick={() => {
+                    if (!redirectIfNotLoggedIn()) return;
+                    handleAddToCart(cartItem.quantity + 1);
+                  }}
                   className="px-3 py-1 text-gray-700 hover:bg-gray-100"
                 >
                   +
                 </button>
               </div>
             ) : (
-              <CartButton onClick={() => handleAddToCart(1)} disabled={loading}>
+              <CartButton
+                onClick={() => redirectIfNotLoggedIn() && handleAddToCart(1)}
+                disabled={loading}
+              >
                 {loading ? "Adding..." : "Add Cart"}
               </CartButton>
             )}
