@@ -74,7 +74,7 @@ const FeaturedProduct = () => {
       <div className="flex flex-col w-full h-full">
 {mainImage && (
   <img
-    src={mainImage}
+    src={`https://wzonllfccvmvoftahudd.supabase.co/storage/v1/object/public/media/product_main_images/${mainImage}`}
     alt={product.product.name}
     className="w-full h-full object-cover rounded-lg mb-4"
     onError={(e) => {
@@ -82,11 +82,12 @@ const FeaturedProduct = () => {
     }}
   />
 )}
+
 <div className="flex space-x-2">
   {images.map((img, idx) => (
     <img
       key={idx}
-      src={img}
+      src={`https://wzonllfccvmvoftahudd.supabase.co/storage/v1/object/public/media/product_main_images/${img}`}
       alt={`Thumbnail ${idx}`}
       className={`w-20 h-20 object-cover rounded-lg cursor-pointer border ${
         mainImage === img ? "border-black" : "border-gray-300"
