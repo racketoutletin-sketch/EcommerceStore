@@ -18,6 +18,7 @@ import OrderDetailPage from "./pages/OrderDetail";
 import SearchResults from "./pages/SearchResults";
 import WishlistPage from "./pages/WishlistPage";
 import Loader from "./components/Loader";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 import './App.css';
 
@@ -48,6 +49,9 @@ export default function App() {
           <Route path="/subcategories/:subId/products" element={<ProductsBySubCategory />} />
           <Route path="/products/:productId" element={<ProductDetail />} />
           <Route path="/search" element={<SearchResults />} />
+          <Route path="/_vercel/speed-insights/*" element={<SpeedInsights />} />
+
+          
 
           <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
           <Route path="/wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
