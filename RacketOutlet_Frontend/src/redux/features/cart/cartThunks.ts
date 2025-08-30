@@ -2,20 +2,20 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import * as cartApi from "../../../api/cartApi";
 import type { CartItemPayload } from "./types";
 
-// ✅ Fetch
+// ✅ Fetch Cart
 export const fetchCartThunk = createAsyncThunk("cart/fetch", cartApi.fetchCart);
 
-// ✅ Add → then refetch
+// ✅ Add Item (optimistic)
 export const addCartItemThunk = createAsyncThunk(
   "cart/addItem",
   async (payload: CartItemPayload) => {
-    await cartApi.addCartItem(payload);
-    return await cartApi.fetchCart();
+    // Fire & forget add API, optimistic update handled in slice
+    cartApi.addCartItem(payload).catch(console.error);
+    return payload; // return payload for slice to update immediately
   }
 );
 
-// ✅ Update → then refetch
-// 🔥 FIXED: enforce both product_id and quantity are passed
+// ✅ Update Item (optimistic)
 export const updateCartItemThunk = createAsyncThunk(
   "cart/updateItem",
   async ({
@@ -23,29 +23,25 @@ export const updateCartItemThunk = createAsyncThunk(
     product_id,
     quantity,
   }: { id: number; product_id: number; quantity: number }) => {
-    await cartApi.updateCartItem(id, { product_id, quantity });
-    return await cartApi.fetchCart();
+    cartApi.updateCartItem(id, { product_id, quantity }).catch(console.error);
+    return { id, product_id, quantity }; // slice uses this to update instantly
   }
 );
 
-// ✅ Remove → then refetch
+// ✅ Remove Item (optimistic)
 export const removeCartItemThunk = createAsyncThunk(
   "cart/removeItem",
   async (id: number) => {
-    await cartApi.removeCartItem(id);
-    return await cartApi.fetchCart();
+    cartApi.removeCartItem(id).catch(console.error);
+    return id; // slice uses this to remove instantly
   }
 );
 
-// redux/features/cart/cartThunks.ts
-
-// Remove multiple items at once
+// ✅ Remove Multiple Items (optimistic)
 export const removeMultipleCartItemsThunk = createAsyncThunk(
   "cart/removeMultiple",
   async (itemIds: number[]) => {
-    // Call backend API for each item (or a batch endpoint if available)
-    await Promise.all(itemIds.map((id) => cartApi.removeCartItem(id)));
-    // Refetch cart after deletion
-    return await cartApi.fetchCart();
+    Promise.all(itemIds.map((id) => cartApi.removeCartItem(id))).catch(console.error);
+    return itemIds; // slice removes items instantly
   }
 );

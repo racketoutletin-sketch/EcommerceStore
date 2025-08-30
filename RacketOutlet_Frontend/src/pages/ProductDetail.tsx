@@ -29,6 +29,8 @@ const ProductDetail: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [loading, setLoading] = useState(false);
 
+  const user = useSelector((state: RootState) => state.auth.user); // ✅ inside component
+
   const { productDetail, loading: detailLoading, error } = useSelector(
     (state: RootState) => state.productView
   );
@@ -51,38 +53,47 @@ const ProductDetail: React.FC = () => {
   const similarRef = useRef<HTMLDivElement>(null);
   const recentRef = useRef<HTMLDivElement>(null);
 
+  // Fetch product detail
   useEffect(() => {
     if (!productId) return;
     dispatch(fetchProductById(Number(productId)));
   }, [productId, dispatch]);
+
+  // Fetch similar products
   useEffect(() => {
-  if (productDetail?.subcategory_id) {
-    dispatch(
-      fetchProductsBySubCategory({
-        subId: productDetail.subcategory_id,
-        limit: 10, // optional
-      })
-    );
-  }
-}, [productDetail, dispatch]);
+    if (productDetail?.subcategory_id) {
+      dispatch(
+        fetchProductsBySubCategory({
+          subId: productDetail.subcategory_id,
+          limit: 10,
+        })
+      );
+    }
+  }, [productDetail, dispatch]);
+
+  // Add recently viewed
   useEffect(() => {
     if (!productDetail) return;
-dispatch(
-  addRecentlyViewed({
-    id: productDetail.id,
-    name: productDetail.name,
-    description: productDetail.description ?? "",
-    main_image_url: productDetail.main_image_url || "/placeholder.png",
-    price: Number(productDetail.price), // ✅ original price
-    discounted_price: productDetail.discounted_price ?? null, // ✅ discounted price
-    brand: productDetail.brand ?? "",
-  })
-);
-
+    dispatch(
+      addRecentlyViewed({
+        id: productDetail.id,
+        name: productDetail.name,
+        description: productDetail.description ?? "",
+        main_image_url: productDetail.main_image_url || "/placeholder.png",
+        price: Number(productDetail.price),
+        discounted_price: productDetail.discounted_price ?? null,
+        brand: productDetail.brand ?? "",
+      })
+    );
   }, [productDetail, dispatch]);
 
   const handleToggleWishlist = () => {
     if (!productDetail) return;
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
     if (wishlisted) {
       dispatch(removeWishlistItemOptimistic(productDetail.id));
       dispatch(removeWishlistItemThunk(productDetail.id)).catch(() =>
@@ -119,6 +130,11 @@ dispatch(
   const handleBuyNow = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!productDetail) return;
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
     const finalPrice =
       productDetail.discounted_price ?? Number(productDetail.price);
     const directItem = {
@@ -141,6 +157,11 @@ dispatch(
 
   const handleAddToCart = async (quantity = 1) => {
     if (!productDetail) return;
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
     try {
       setLoading(true);
       if (cartItem) {
@@ -161,26 +182,18 @@ dispatch(
     }
   };
 
-const scroll = (ref: React.RefObject<HTMLDivElement | null>, dir: "left" | "right") => {
-  if (!ref.current) return; // guard against null
-  if (dir === "left") {
-    ref.current.scrollBy({ left: -200, behavior: "smooth" });
-  } else {
-    ref.current.scrollBy({ left: 200, behavior: "smooth" });
-  }
-};
-
+  const scroll = (ref: React.RefObject<HTMLDivElement | null>, dir: "left" | "right") => {
+    if (!ref.current) return;
+    ref.current.scrollBy({ left: dir === "left" ? -200 : 200, behavior: "smooth" });
+  };
 
   if (detailLoading) return <Loader />;
   if (error) return <p className="text-red-500 text-center mt-6">{error}</p>;
   if (!productDetail)
-    return (
-      <p className="text-gray-500 text-center mt-6">Product not found</p>
-    );
+    return <p className="text-gray-500 text-center mt-6">Product not found</p>;
 
   const filteredSimilar =
     subCatProducts?.filter((p) => p.id !== productDetail.id) || [];
-    
   const filteredRecentlyViewed = recentlyViewed.filter(
     (p) => p.id !== productDetail.id
   );

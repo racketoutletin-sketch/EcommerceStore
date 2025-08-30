@@ -5,9 +5,6 @@ import { addCartItemThunk, updateCartItemThunk, removeCartItemThunk } from "../r
 import BuyNowButton from "../components/ui/BuyNowButton";
 import CartButton from "../components/ui/CartButton";
 
-
-
-
 interface ProductCardProps {
   id: number;
   name: string;
@@ -31,12 +28,20 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
+  const user = useAppSelector((state) => state.auth.user); // ✅ move inside component
   const cart = useAppSelector((state) => state.cart.cart);
   const cartItem = cart?.items?.find((item) => item.product.id === id);
   const inCart = !!cartItem;
 
+  // Add to cart
   const handleAddToCart = async (quantity: number) => {
+    if (!user) {
+      navigate("/login"); // redirect if not logged in
+      return;
+    }
+
     if (quantity < 1) return;
+
     try {
       setLoadingCart(true);
       if (inCart && cartItem?.id) {
@@ -51,10 +56,15 @@ const ProductCard: React.FC<ProductCardProps> = ({
     }
   };
 
+  // Buy now
   const handleBuyNow = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const finalPrice = discounted_price ?? price;
+    if (!user) {
+      navigate("/login"); // redirect if not logged in
+      return;
+    }
 
+    const finalPrice = discounted_price ?? price;
     const directItem = {
       id: Date.now(),
       quantity: 1,
@@ -103,10 +113,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
         <div className="opacity-0 group-hover:opacity-100 transition-opacity mt-2 flex items-center space-x-2">
           <BuyNowButton
-            onClick={(e) => {
-              e.stopPropagation();
-              handleBuyNow(e);
-            }}
+            onClick={(e) => handleBuyNow(e)}
             aria-label="Buy Now"
             disabled={loadingCart}
           >
@@ -114,51 +121,49 @@ const ProductCard: React.FC<ProductCardProps> = ({
           </BuyNowButton>
 
           {inCart ? (
-  <div className="flex items-center border rounded">
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        if (cartItem?.quantity === 1 && cartItem?.id) {
-          // Remove item from cart
-          dispatch(removeCartItemThunk(cartItem.id));
-        } else if (cartItem?.quantity && cartItem?.id) {
-          handleAddToCart(cartItem.quantity - 1);
-        }
-      }}
-      className="px-3 py-1 text-gray-700 hover:bg-gray-100 disabled:opacity-50"
-      disabled={loadingCart}
-    >
-      -
-    </button>
+            <div className="flex items-center border rounded">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (cartItem?.quantity === 1 && cartItem?.id) {
+                    dispatch(removeCartItemThunk(cartItem.id));
+                  } else if (cartItem?.quantity && cartItem?.id) {
+                    handleAddToCart(cartItem.quantity - 1);
+                  }
+                }}
+                className="px-3 py-1 text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+                disabled={loadingCart}
+              >
+                -
+              </button>
 
-    <span className="px-4 py-1">{cartItem?.quantity ?? 1}</span>
+              <span className="px-4 py-1">{cartItem?.quantity ?? 1}</span>
 
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        handleAddToCart((cartItem?.quantity ?? 0) + 1);
-      }}
-      disabled={loadingCart}
-      aria-label="Increase quantity"
-      className="px-3 py-1 text-gray-700 hover:bg-gray-100"
-    >
-      +
-    </button>
-  </div>
-) : (
-  <CartButton
-    onClick={(e) => {
-      e.stopPropagation();
-      handleAddToCart(1);
-    }}
-    disabled={loadingCart}
-    aria-label="Add to cart"
-    className="flex-1 bg-white-500 text-black py-1 rounded hover:bg-black border disabled:opacity-50"
-  >
-    {loadingCart ? "Adding..." : "Add Cart"}
-  </CartButton>
-)}
-
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAddToCart((cartItem?.quantity ?? 0) + 1);
+                }}
+                disabled={loadingCart}
+                aria-label="Increase quantity"
+                className="px-3 py-1 text-gray-700 hover:bg-gray-100"
+              >
+                +
+              </button>
+            </div>
+          ) : (
+            <CartButton
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAddToCart(1);
+              }}
+              disabled={loadingCart}
+              aria-label="Add to cart"
+              className="flex-1 bg-white-500 text-black py-1 rounded hover:bg-black border disabled:opacity-50"
+            >
+              {loadingCart ? "Adding..." : "Add Cart"}
+            </CartButton>
+          )}
         </div>
       </div>
     </div>

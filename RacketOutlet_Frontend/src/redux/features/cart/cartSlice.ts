@@ -11,7 +11,7 @@ import {
   removeMultipleCartItemsThunk,
 } from "./cartThunks";
 
-// Load initial cart from localStorage if exists
+// Load cart from localStorage
 const savedCart = localStorage.getItem("cart");
 const initialState: CartState = {
   cart: savedCart ? JSON.parse(savedCart) : null,
@@ -30,37 +30,19 @@ const cartSlice = createSlice({
       localStorage.removeItem("cart");
     },
     removeItemsFromCart: (state, action: PayloadAction<number[]>) => {
-  if (!state.cart) return;
-
-  const newItems = state.cart.items.filter(
-    (item) => !action.payload.includes(item.id)
-  );
-
-  // Update cart safely
-  state.cart = {
-    ...state.cart,
-    items: newItems,
-    total_price: newItems
-      .reduce((sum, item) => sum + parseFloat(item.subtotal), 0)
-      .toFixed(2), // string
-  };
-
-  // Sync state.items
-  state.items = newItems;
-
-  // Persist
-  localStorage.setItem("cart", JSON.stringify(state.cart));
-},
-
-
-
-
+      if (!state.cart) return;
+      state.items = state.items.filter((item) => !action.payload.includes(item.id));
+      state.cart.items = state.items;
+      state.cart.total_price = state.items
+        .reduce((sum, i) => sum + parseFloat(i.subtotal), 0)
+        .toFixed(2);
+      localStorage.setItem("cart", JSON.stringify(state.cart));
+    },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchCartThunk.pending, (state) => {
-        state.loading = true;
-      })
+      // Fetch Cart
+      .addCase(fetchCartThunk.pending, (state) => { state.loading = true; })
       .addCase(fetchCartThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.cart = action.payload;
@@ -71,26 +53,62 @@ const cartSlice = createSlice({
         state.loading = false;
         state.error = action.error.message ?? "Failed to fetch cart";
       })
+
+      // Add Item (Optimistic)
       .addCase(addCartItemThunk.fulfilled, (state, action) => {
-        state.cart = action.payload;
-        state.items = action.payload.items;
-        localStorage.setItem("cart", JSON.stringify(action.payload));
+        const newItem = action.payload;
+        const existing = state.items.find(i => i.product.id === newItem.product_id);
+
+        if (existing) {
+          existing.quantity += newItem.quantity;
+          existing.subtotal = (parseFloat(existing.product.price) * existing.quantity).toFixed(2);
+        } else {
+          state.items.push({
+            id: Date.now(),
+            product: { id: newItem.product_id, name: "Loading...", price: "0" },
+            quantity: newItem.quantity,
+            subtotal: "0",
+          });
+        }
+
+        state.cart = {
+          ...state.cart!,
+          items: state.items,
+          total_price: state.items.reduce((sum, i) => sum + parseFloat(i.subtotal), 0).toFixed(2),
+        };
+        localStorage.setItem("cart", JSON.stringify(state.cart));
       })
+
+      // Update Item
       .addCase(updateCartItemThunk.fulfilled, (state, action) => {
-        state.cart = action.payload;
-        state.items = action.payload.items;
-        localStorage.setItem("cart", JSON.stringify(action.payload));
+        const { id, quantity } = action.payload;
+        const item = state.items.find((i) => i.id === id);
+        if (item) {
+          item.quantity = quantity;
+          item.subtotal = (parseFloat(item.product.price) * quantity).toFixed(2);
+        }
+        state.cart!.items = state.items;
+        state.cart!.total_price = state.items.reduce((sum, i) => sum + parseFloat(i.subtotal), 0).toFixed(2);
+        localStorage.setItem("cart", JSON.stringify(state.cart));
       })
+
+      // Remove Item
       .addCase(removeCartItemThunk.fulfilled, (state, action) => {
-        state.cart = action.payload;
-        state.items = action.payload.items;
-        localStorage.setItem("cart", JSON.stringify(action.payload));
+        const id = action.payload;
+        state.items = state.items.filter((i) => i.id !== id);
+        state.cart!.items = state.items;
+        state.cart!.total_price = state.items.reduce((sum, i) => sum + parseFloat(i.subtotal), 0).toFixed(2);
+        localStorage.setItem("cart", JSON.stringify(state.cart));
       })
+
+      // Remove Multiple Items
       .addCase(removeMultipleCartItemsThunk.fulfilled, (state, action) => {
-      state.cart = action.payload;
-      state.items = action.payload.items;
-      localStorage.setItem("cart", JSON.stringify(action.payload));
-    });
+        const ids = action.payload;
+        state.items = state.items.filter((i) => !ids.includes(i.id));
+        state.cart!.items = state.items;
+        state.cart!.total_price = state.items.reduce((sum, i) => sum + parseFloat(i.subtotal), 0).toFixed(2);
+        localStorage.setItem("cart", JSON.stringify(state.cart));
+      });
   },
 });
 

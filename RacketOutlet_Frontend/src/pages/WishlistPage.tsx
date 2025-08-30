@@ -25,13 +25,6 @@ const Wishlist: React.FC = () => {
     }
   }, [dispatch, items.length]);
 
-  const handleRemove = (productId: number) => {
-    dispatch(removeWishlistItemOptimistic(productId));
-    dispatch(removeWishlistItemThunk(productId)).catch((err) => {
-      console.error("Failed to remove wishlist item", err);
-      dispatch(fetchWishlistThunk());
-    });
-  };
 
   if (loading)
     return <Loader />;
@@ -92,13 +85,23 @@ const Wishlist: React.FC = () => {
               </p>
 
               <BuyNowButton
-                onClick={() =>
-                  item.product?.id && handleRemove(item.product.id)
-                }
-                className="mt-3 px-4 py-2"
-              >
-                Remove
-              </BuyNowButton>
+  onClick={(e) => {
+    e.preventDefault();  // ✅ Prevent form submission / reload
+    if (!item.product?.id) return;
+    dispatch(removeWishlistItemOptimistic(item.product.id));
+    dispatch(removeWishlistItemThunk(item.product.id))
+    .unwrap()
+    .catch((err) => {
+      console.error("Failed to remove wishlist item", err);
+      dispatch(fetchWishlistThunk()); // Only on actual API failure
+    });
+
+  }}
+  className="mt-3 px-4 py-2"
+>
+  Remove
+</BuyNowButton>
+
             </div>
           ))
         )}
