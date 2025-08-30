@@ -16,7 +16,7 @@ interface Product {
   price: string;
   discounted_price: string;
   brand: string;
-  main_image: string;
+  main_image_url: string;
   images: ProductImage[];
 }
 
@@ -42,7 +42,7 @@ const FeaturedProduct = () => {
       if (res.data.exclusiveProducts.length > 0) {
         const prod = res.data.exclusiveProducts[0];
         setProduct(prod);
-        setMainImage(prod.product?.main_image || null);
+        setMainImage(prod.product?.main_image_url || null);
       }
     } catch (err) {
       console.error("Error fetching featured product:", err);
@@ -65,8 +65,8 @@ const FeaturedProduct = () => {
   }
 
   const images = product.product.images.length > 0
-    ? product.product.images.map((img) => img.image)
-    : [product.product.main_image];
+    ? product.product.images.map((img) => img.image_url)
+    : [product.product.main_image_url];
 
   return (
     <div className="bg-white p-8 rounded-lg max-w-7xl mx-auto mt-16 mb-16 min-h-[600px] grid grid-cols-1 md:grid-cols-2 gap-12">
@@ -74,7 +74,7 @@ const FeaturedProduct = () => {
       <div className="flex flex-col w-full h-full">
 {mainImage && (
   <img
-    src={`https://wzonllfccvmvoftahudd.supabase.co/storage/v1/object/public/media/product_main_images/${mainImage}`}
+    src={mainImage}
     alt={product.product.name}
     className="w-full h-full object-cover rounded-lg mb-4"
     onError={(e) => {
@@ -82,12 +82,11 @@ const FeaturedProduct = () => {
     }}
   />
 )}
-
 <div className="flex space-x-2">
   {images.map((img, idx) => (
     <img
       key={idx}
-      src={`https://wzonllfccvmvoftahudd.supabase.co/storage/v1/object/public/media/product_main_images/${img}`}
+      src={img ?? '/default.png'}
       alt={`Thumbnail ${idx}`}
       className={`w-20 h-20 object-cover rounded-lg cursor-pointer border ${
         mainImage === img ? "border-black" : "border-gray-300"
