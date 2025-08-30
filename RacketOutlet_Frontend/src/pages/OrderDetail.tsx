@@ -46,9 +46,9 @@ const OrderDetailPage = () => {
     <div className="w-full bg-gray-50 min-h-screen">
       <TopBar />
       <Header />
-    <div className="container mx-auto p-4">
+    <div className="w-full px-8 lg:px-24 py-6 flex flex-col gap-6">
 
-      <Link to="/orders" className="text-blue-500 hover:underline mb-4 inline-block">
+      <Link to="/orders" className="text-black hover:underline mb-4 inline-block">
         &larr; Back to Orders
       </Link>
 

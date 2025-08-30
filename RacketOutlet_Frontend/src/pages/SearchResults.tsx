@@ -143,7 +143,7 @@ const SearchResults: React.FC = () => {
       </div>
 
       {/* Results */}
-      {loading && <p className="text-blue-500">Loading...</p>}
+      {loading && <p className="text-black">Loading...</p>}
       {error && <p className="text-red-500">{error}</p>}
 
       {!loading && !error && (

@@ -14,7 +14,7 @@ export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [localError, setLocalError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLocalError(null);
 
@@ -22,7 +22,7 @@ export default function Login() {
     if (loginUser.fulfilled.match(result)) {
       navigate("/");
     } else if (loginUser.rejected.match(result)) {
-      setLocalError(result.payload as string || "Login failed");
+      setLocalError((result.payload as string) || "Login failed");
     }
   };
 
@@ -31,66 +31,93 @@ export default function Login() {
       <TopBar />
       <Header />
 
-      <div className="flex-grow flex justify-center items-center px-4">
-        <div className="w-full max-w-md bg-white rounded-4xl p-8">
-          <h2 className="text-5xl font-bold text-center mb-6 text-gray-800">Welcome Back</h2>
+      <div className="w-full px-6 lg:px-24 py-8 flex flex-col gap-6 items-start">
+        {/* Centered Form */}
+        <div className="w-full flex justify-center">
+          <div className="lg:w-2/3 bg-white rounded-3xl shadow-lg p-8 space-y-6">
+            <h2 className="text-3xl font-semibold text-gray-800 mb-6 text-center">
+              Welcome Back 👋
+            </h2>
 
-          {(error || localError) && (
-            <p className="text-red-500 mb-4 text-center">{error || localError}</p>
-          )}
+            {(error || localError) && (
+              <p className="text-red-500 mb-4 text-center">{error || localError}</p>
+            )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block mb-1 text-gray-600 font-medium">Email</label>
-              <input
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <InputField
+                label="Email"
                 type="email"
-                placeholder="Enter your email"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                required
+                placeholder="Enter your email"
               />
-            </div>
 
-            <div>
-              <label className="block mb-1 text-gray-600 font-medium">Password</label>
-              <input
+              <InputField
+                label="Password"
                 type="password"
-                placeholder="Enter your password"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                required
+                placeholder="Enter your password"
               />
-              {/* Forgot Password Link */}
+
+              {/* Forgot Password */}
               <p
                 onClick={() => navigate("/forgot-password")}
-                className="mt-2 text-right text-sm text-black cursor-pointer hover:underline"
+                className="mt-1 text-right text-sm text-black cursor-pointer hover:underline"
               >
                 Forgot Password?
               </p>
-            </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-black text-white py-3 rounded-lg hover:bg-white hover:text-black hover:border transition-colors disabled:opacity-50"
-            >
-              {loading ? "Logging in..." : "Login"}
-            </button>
-          </form>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 bg-black text-white rounded-xl font-semibold hover:bg-white hover:text-black hover:border hover:border-black transition disabled:opacity-50"
+              >
+                {loading ? "Logging in..." : "Login"}
+              </button>
+            </form>
 
-          <p className="mt-6 text-center text-gray-600">
-            Don’t have an account?{" "}
-            <span
-              onClick={() => navigate("/register")}
-              className="text-black font-medium cursor-pointer hover:underline"
-            >
-              Sign Up
-            </span>
-          </p>
+            <p className="mt-4 text-center text-gray-600">
+              Don’t have an account?{" "}
+              <span
+                onClick={() => navigate("/register")}
+                className="text-black font-medium cursor-pointer hover:underline"
+              >
+                Sign Up
+              </span>
+            </p>
+          </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* 🔹 Helpers */
+function InputField({
+  label,
+  value,
+  onChange,
+  type = "text",
+  placeholder = "",
+}: {
+  label: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  type?: string;
+  placeholder?: string;
+}) {
+  return (
+    <div className="flex flex-col">
+      <label className="text-gray-600 font-medium mb-1">{label}</label>
+      <input
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        required
+        className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+      />
     </div>
   );
 }

@@ -86,8 +86,8 @@ const OrdersPage = () => {
     <div className="w-full bg-gray-50 min-h-screen">
       <TopBar />
       <Header />
-      <div className="max-w-7xl mx-auto p-6">
-        <h1 className="text-3xl font-bold mb-6 text-gray-800">My Orders</h1>
+      <div className="w-full px-8 lg:px-24 py-6 flex flex-col gap-6">
+        <h1 className="text-4xl font-bold mb-6 text-gray-800">My Orders</h1>
         {orders.length === 0 && <p className="text-center text-gray-500">No orders found.</p>}
 
         <div className="flex flex-col gap-6">

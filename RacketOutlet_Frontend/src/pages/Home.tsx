@@ -16,21 +16,21 @@ import InfoCards from "../components/HomePage/InfoCards";
 import Footer from "../components/HomePage/Footer";
 import useInitAuth from "../hooks/useInitAuth";
 import usePreloadSubCategories from "../hooks/usePreloadSubCategories";
-import Loader from "../components/Loader"; 
-<Loader />
+import Loader from "../components/Loader";
 
 const Home = () => {
   useInitAuth();
 
-  // ✅ Start preloading in the background (does not block render)
   const loadingSubCategories = usePreloadSubCategories();
 
   return (
-    <div className="min-h-screen bg-white font-poppins">
+    <div className="min-h-screen flex flex-col bg-white font-poppins">
       <TopBar />
       <Header />
 
-      <main className="max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="flex-grow max-w-[1840px] w-full mx-auto px-2 py-4">
+
+
         {/* Hero Section */}
         <HeroBanners />
 
@@ -61,9 +61,11 @@ const Home = () => {
 
       <Footer />
 
-      {/* Optional background loader indicator */}
+      {/* Full-screen Loader overlay */}
       {loadingSubCategories && (
-<Loader />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70">
+          <Loader />
+        </div>
       )}
     </div>
   );

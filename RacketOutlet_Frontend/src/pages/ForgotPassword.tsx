@@ -6,26 +6,25 @@ import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
 
 export default function ForgotPassword() {
-  const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [showToast, setShowToast] = useState(false);
+  const [email, setEmail] = useState<string>("");
+  const [message, setMessage] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [showToast, setShowToast] = useState<boolean>(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setShowToast(false);
 
     try {
-      const res = await api.post("api/users/password/reset/", { email });
+      const res = await api.post<{ detail?: string }>("api/users/password/reset/", { email });
       setMessage(res.data.detail || "Check your email for reset link.");
     } catch (err: any) {
       setMessage(err.response?.data?.detail || "Something went wrong.");
     } finally {
       setLoading(false);
       setShowToast(true);
-      // Auto-dismiss toast after 3 seconds
       setTimeout(() => setShowToast(false), 3000);
     }
   };
@@ -42,45 +41,53 @@ export default function ForgotPassword() {
         </div>
       )}
 
-      <div className="flex-grow flex justify-center items-center px-4">
-        <div className="w-full max-w-md bg-white rounded-4xl p-8">
-          <h2 className="text-5xl font-bold text-center mb-6 text-gray-800">
-            Forgot Password
-          </h2>
+      <div className="w-full px-6 lg:px-24 py-8 flex flex-col gap-6">
+        {/* Back Button */}
+        <div className="mb-4">
+          <button
+            type="button"
+            onClick={() => navigate("/login")}
+            className="text-black hover:underline font-medium"
+          >
+            &larr; Back to Login
+          </button>
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block mb-1 text-gray-600 font-medium">
-                Email
-              </label>
-              <input
+        {/* Centered Form */}
+        <div className="w-full flex justify-center">
+          <div className="lg:w-2/3 bg-white rounded-3xl shadow-lg p-8 space-y-6">
+            <h2 className="text-3xl font-semibold text-gray-800 mb-6 text-center">
+              Forgot Password 🔑
+            </h2>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <InputField
+                label="Email"
                 type="email"
-                placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                placeholder="Enter your email"
               />
-            </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-black text-white py-3 rounded-lg hover:bg-white hover:text-black hover:border transition-colors disabled:opacity-50"
-            >
-              {loading ? "Sending Reset Link..." : "Send Reset Link"}
-            </button>
-          </form>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 bg-black text-white rounded-xl font-semibold hover:bg-white hover:text-black hover:border hover:border-black transition disabled:opacity-50"
+              >
+                {loading ? "Sending Reset Link..." : "Send Reset Link"}
+              </button>
+            </form>
 
-          <p className="mt-6 text-center text-gray-600">
-            Remembered your password?{" "}
-            <span
-              onClick={() => navigate("/login")}
-              className="text-black font-medium cursor-pointer hover:underline"
-            >
-              Login
-            </span>
-          </p>
+            <p className="mt-4 text-gray-600 text-center">
+              Remembered your password?{" "}
+              <span
+                onClick={() => navigate("/login")}
+                className="text-black font-medium cursor-pointer hover:underline"
+              >
+                Login
+              </span>
+            </p>
+          </div>
         </div>
       </div>
 
@@ -96,6 +103,35 @@ export default function ForgotPassword() {
           }
         `}
       </style>
+    </div>
+  );
+}
+
+/* 🔹 Helpers */
+function InputField({
+  label,
+  value,
+  onChange,
+  type = "text",
+  placeholder = "",
+}: {
+  label: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  type?: string;
+  placeholder?: string;
+}) {
+  return (
+    <div className="flex flex-col">
+      <label className="text-gray-600 font-medium mb-1">{label}</label>
+      <input
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        required
+        className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+      />
     </div>
   );
 }
