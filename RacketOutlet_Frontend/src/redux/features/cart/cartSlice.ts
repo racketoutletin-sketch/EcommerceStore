@@ -41,8 +41,11 @@ const cartSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fetch Cart
-      .addCase(fetchCartThunk.pending, (state) => { state.loading = true; })
+      // ✅ Fetch Cart
+      .addCase(fetchCartThunk.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(fetchCartThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.cart = action.payload;
@@ -51,17 +54,21 @@ const cartSlice = createSlice({
       })
       .addCase(fetchCartThunk.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message ?? "Failed to fetch cart";
+        state.error =
+          (action.payload as string) || action.error.message || "Failed to fetch cart";
       })
 
-      // Add Item (Optimistic)
+      // ✅ Add Item (Optimistic)
       .addCase(addCartItemThunk.fulfilled, (state, action) => {
+        state.error = null;
         const newItem = action.payload;
-        const existing = state.items.find(i => i.product.id === newItem.product_id);
+        const existing = state.items.find((i) => i.product.id === newItem.product_id);
 
         if (existing) {
           existing.quantity += newItem.quantity;
-          existing.subtotal = (parseFloat(existing.product.price) * existing.quantity).toFixed(2);
+          existing.subtotal = (
+            parseFloat(existing.product.price) * existing.quantity
+          ).toFixed(2);
         } else {
           state.items.push({
             id: Date.now(),
@@ -74,13 +81,20 @@ const cartSlice = createSlice({
         state.cart = {
           ...state.cart!,
           items: state.items,
-          total_price: state.items.reduce((sum, i) => sum + parseFloat(i.subtotal), 0).toFixed(2),
+          total_price: state.items
+            .reduce((sum, i) => sum + parseFloat(i.subtotal), 0)
+            .toFixed(2),
         };
         localStorage.setItem("cart", JSON.stringify(state.cart));
       })
+      .addCase(addCartItemThunk.rejected, (state, action) => {
+        state.error =
+          (action.payload as string) || action.error.message || "Failed to add item";
+      })
 
-      // Update Item
+      // ✅ Update Item
       .addCase(updateCartItemThunk.fulfilled, (state, action) => {
+        state.error = null;
         const { id, quantity } = action.payload;
         const item = state.items.find((i) => i.id === id);
         if (item) {
@@ -88,26 +102,52 @@ const cartSlice = createSlice({
           item.subtotal = (parseFloat(item.product.price) * quantity).toFixed(2);
         }
         state.cart!.items = state.items;
-        state.cart!.total_price = state.items.reduce((sum, i) => sum + parseFloat(i.subtotal), 0).toFixed(2);
+        state.cart!.total_price = state.items
+          .reduce((sum, i) => sum + parseFloat(i.subtotal), 0)
+          .toFixed(2);
         localStorage.setItem("cart", JSON.stringify(state.cart));
       })
+      .addCase(updateCartItemThunk.rejected, (state, action) => {
+        state.error =
+          (action.payload as string) ||
+          action.error.message ||
+          "Failed to update item";
+      })
 
-      // Remove Item
+      // ✅ Remove Item
       .addCase(removeCartItemThunk.fulfilled, (state, action) => {
+        state.error = null;
         const id = action.payload;
         state.items = state.items.filter((i) => i.id !== id);
         state.cart!.items = state.items;
-        state.cart!.total_price = state.items.reduce((sum, i) => sum + parseFloat(i.subtotal), 0).toFixed(2);
+        state.cart!.total_price = state.items
+          .reduce((sum, i) => sum + parseFloat(i.subtotal), 0)
+          .toFixed(2);
         localStorage.setItem("cart", JSON.stringify(state.cart));
       })
+      .addCase(removeCartItemThunk.rejected, (state, action) => {
+        state.error =
+          (action.payload as string) ||
+          action.error.message ||
+          "Failed to remove item";
+      })
 
-      // Remove Multiple Items
+      // ✅ Remove Multiple Items
       .addCase(removeMultipleCartItemsThunk.fulfilled, (state, action) => {
+        state.error = null;
         const ids = action.payload;
         state.items = state.items.filter((i) => !ids.includes(i.id));
         state.cart!.items = state.items;
-        state.cart!.total_price = state.items.reduce((sum, i) => sum + parseFloat(i.subtotal), 0).toFixed(2);
+        state.cart!.total_price = state.items
+          .reduce((sum, i) => sum + parseFloat(i.subtotal), 0)
+          .toFixed(2);
         localStorage.setItem("cart", JSON.stringify(state.cart));
+      })
+      .addCase(removeMultipleCartItemsThunk.rejected, (state, action) => {
+        state.error =
+          (action.payload as string) ||
+          action.error.message ||
+          "Failed to remove multiple items";
       });
   },
 });

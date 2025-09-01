@@ -1,47 +1,42 @@
-import { createAsyncThunk } from "@reduxjs/toolkit";
+// src/redux/features/cart/cartThunks.ts
 import * as cartApi from "../../../api/cartApi";
+import { createAuthThunk } from "../../utils/createAuthThunk";
 import type { CartItemPayload } from "./types";
 
 // ✅ Fetch Cart
-export const fetchCartThunk = createAsyncThunk("cart/fetch", cartApi.fetchCart);
+export const fetchCartThunk = createAuthThunk("cart/fetch", async () => {
+  return await cartApi.fetchCart();
+});
 
-// ✅ Add Item (optimistic)
-export const addCartItemThunk = createAsyncThunk(
+// ✅ Add Item
+export const addCartItemThunk = createAuthThunk(
   "cart/addItem",
   async (payload: CartItemPayload) => {
-    // Fire & forget add API, optimistic update handled in slice
     cartApi.addCartItem(payload).catch(console.error);
-    return payload; // return payload for slice to update immediately
+    return payload; // optimistic update
   }
 );
 
-// ✅ Update Item (optimistic)
-export const updateCartItemThunk = createAsyncThunk(
+// ✅ Update Item
+export const updateCartItemThunk = createAuthThunk(
   "cart/updateItem",
-  async ({
-    id,
-    product_id,
-    quantity,
-  }: { id: number; product_id: number; quantity: number }) => {
+  async ({ id, product_id, quantity }: { id: number; product_id: number; quantity: number }) => {
     cartApi.updateCartItem(id, { product_id, quantity }).catch(console.error);
-    return { id, product_id, quantity }; // slice uses this to update instantly
+    return { id, product_id, quantity };
   }
 );
 
-// ✅ Remove Item (optimistic)
-export const removeCartItemThunk = createAsyncThunk(
-  "cart/removeItem",
-  async (id: number) => {
-    cartApi.removeCartItem(id).catch(console.error);
-    return id; // slice uses this to remove instantly
-  }
-);
+// ✅ Remove Item
+export const removeCartItemThunk = createAuthThunk("cart/removeItem", async (id: number) => {
+  cartApi.removeCartItem(id).catch(console.error);
+  return id;
+});
 
-// ✅ Remove Multiple Items (optimistic)
-export const removeMultipleCartItemsThunk = createAsyncThunk(
+// ✅ Remove Multiple
+export const removeMultipleCartItemsThunk = createAuthThunk(
   "cart/removeMultiple",
   async (itemIds: number[]) => {
     Promise.all(itemIds.map((id) => cartApi.removeCartItem(id))).catch(console.error);
-    return itemIds; // slice removes items instantly
+    return itemIds;
   }
 );
