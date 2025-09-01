@@ -12,26 +12,31 @@ def get_supabase_storage():
 # Category Model
 # -------------------------------
 class Category(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    slug = models.SlugField(max_length=120, unique=True, blank=True)
+    name = models.CharField(max_length=100, unique=True, db_index=True)  # indexed
+    slug = models.SlugField(max_length=120, unique=True, blank=True, db_index=True)
     description = models.TextField(blank=True, null=True)
     image = models.ImageField(storage=SupabaseStorage, upload_to="category_images/", blank=True, null=True)
     image_url = models.URLField(blank=True, null=True)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
-    is_featured = models.BooleanField(default=False)
+    is_featured = models.BooleanField(default=False, db_index=True)
 
     class Meta:
         ordering = ['name']
         verbose_name_plural = 'Categories'
+        indexes = [
+            models.Index(fields=['name']),
+            models.Index(fields=['slug']),
+            models.Index(fields=['is_active']),
+            models.Index(fields=['is_featured']),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
 
-        # Auto-populate Supabase public URL
         if self.image and not self.image_url:
             self.image_url = SupabaseStorage.url(self.image.name)
             super().save(update_fields=["image_url"])
@@ -44,21 +49,28 @@ class Category(models.Model):
 # SubCategory Model
 # -------------------------------
 class SubCategory(models.Model):
-    name = models.CharField(max_length=100)
-    slug = models.SlugField(max_length=120, unique=True, blank=True)
-    parent_category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='subcategories')
+    name = models.CharField(max_length=100, db_index=True)
+    slug = models.SlugField(max_length=120, unique=True, blank=True, db_index=True)
+    parent_category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='subcategories', db_index=True)
     description = models.TextField(blank=True, null=True)
     image = models.ImageField(storage=SupabaseStorage, upload_to="subcategory_images/", blank=True, null=True)
     image_url = models.URLField(blank=True, null=True)
-    is_featured = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    is_featured = models.BooleanField(default=False, db_index=True)
+    is_active = models.BooleanField(default=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = ('name', 'parent_category')
         ordering = ['name']
         verbose_name_plural = 'Subcategories'
+        indexes = [
+            models.Index(fields=['name']),
+            models.Index(fields=['slug']),
+            models.Index(fields=['parent_category']),
+            models.Index(fields=['is_active']),
+            models.Index(fields=['is_featured']),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -77,38 +89,44 @@ class SubCategory(models.Model):
 # Product Model
 # -------------------------------
 class Product(models.Model):
-    name = models.CharField(max_length=200)
-    slug = models.SlugField(max_length=255, unique=True, blank=True, null=True)
+    name = models.CharField(max_length=200, db_index=True)
+    slug = models.SlugField(max_length=255, unique=True, blank=True, null=True, db_index=True)
     description = models.TextField()
-    subcategory = models.ForeignKey(SubCategory, on_delete=models.CASCADE, related_name='products')
-    price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
+    subcategory = models.ForeignKey(SubCategory, on_delete=models.CASCADE, related_name='products', db_index=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)], db_index=True)
     discounted_price = models.DecimalField(
-        max_digits=10, decimal_places=2, blank=True, null=True, validators=[MinValueValidator(0)]
+        max_digits=10, decimal_places=2, blank=True, null=True, validators=[MinValueValidator(0)], db_index=True
     )
-    sku = models.CharField(max_length=100, unique=True)
-    brand = models.CharField(max_length=100, blank=True, null=True)
+    sku = models.CharField(max_length=100, unique=True, db_index=True)
+    brand = models.CharField(max_length=100, blank=True, null=True, db_index=True)
     weight = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, validators=[MinValueValidator(0)])
     dimensions = models.CharField(max_length=100, blank=True, null=True)
     material = models.CharField(max_length=100, blank=True, null=True)
 
-    # Primary image for quick access
     main_image = models.ImageField(storage=SupabaseStorage, upload_to="product_main_images/", blank=True, null=True)
     main_image_url = models.URLField(blank=True, null=True)
 
-    # Dynamic attributes
-    extra_attributes = models.JSONField(blank=True, null=True, help_text="Store dynamic product attributes as JSON")
+    extra_attributes = models.JSONField(blank=True, null=True)
 
-    # Flags
-    is_featured = models.BooleanField(default=False)
-    is_deal_of_the_day = models.BooleanField(default=False)
-    is_exclusive_product = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)
+    is_featured = models.BooleanField(default=False, db_index=True)
+    is_deal_of_the_day = models.BooleanField(default=False, db_index=True)
+    is_exclusive_product = models.BooleanField(default=False, db_index=True)
+    is_active = models.BooleanField(default=True, db_index=True)
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['name']),
+            models.Index(fields=['slug']),
+            models.Index(fields=['sku']),
+            models.Index(fields=['brand']),
+            models.Index(fields=['subcategory']),
+            models.Index(fields=['is_active']),
+            models.Index(fields=['is_featured']),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -131,14 +149,18 @@ class Product(models.Model):
 # Product Image Model
 # -------------------------------
 class ProductImage(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images', db_index=True)
     image = models.ImageField(storage=SupabaseStorage, upload_to="product_images/")
     image_url = models.URLField(blank=True, null=True)
-    alt_text = models.CharField(max_length=255, blank=True, null=True)
-    is_primary = models.BooleanField(default=False)
+    alt_text = models.CharField(max_length=255, blank=True, null=True, db_index=True)
+    is_primary = models.BooleanField(default=False, db_index=True)
 
     class Meta:
         ordering = ['-is_primary', 'id']
+        indexes = [
+            models.Index(fields=['product']),
+            models.Index(fields=['is_primary']),
+        ]
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -155,13 +177,18 @@ class ProductImage(models.Model):
 # Inventory Model
 # -------------------------------
 class Inventory(models.Model):
-    product = models.OneToOneField(Product, on_delete=models.CASCADE, related_name='inventory')
-    quantity = models.PositiveIntegerField(default=0)
-    low_stock_threshold = models.PositiveIntegerField(default=10)
-    last_restocked_at = models.DateTimeField(auto_now=True)
+    product = models.OneToOneField(Product, on_delete=models.CASCADE, related_name='inventory', db_index=True)
+    quantity = models.PositiveIntegerField(default=0, db_index=True)
+    low_stock_threshold = models.PositiveIntegerField(default=10, db_index=True)
+    last_restocked_at = models.DateTimeField(auto_now=True, db_index=True)
 
     class Meta:
         verbose_name_plural = 'Inventories'
+        indexes = [
+            models.Index(fields=['product']),
+            models.Index(fields=['quantity']),
+            models.Index(fields=['low_stock_threshold']),
+        ]
 
     def __str__(self):
         return f"{self.product.name} - {self.quantity} in stock"
