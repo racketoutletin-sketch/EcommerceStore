@@ -29,7 +29,7 @@ const ProductDetail: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [loading, setLoading] = useState(false);
 
-  const user = useSelector((state: RootState) => state.auth.user); // ✅ inside component
+  const user = useSelector((state: RootState) => state.auth.user);
 
   const { productDetail, loading: detailLoading, error } = useSelector(
     (state: RootState) => state.productView
@@ -53,13 +53,13 @@ const ProductDetail: React.FC = () => {
   const similarRef = useRef<HTMLDivElement>(null);
   const recentRef = useRef<HTMLDivElement>(null);
 
-  // Fetch product detail
+  // ✅ Fetch product detail
   useEffect(() => {
     if (!productId) return;
     dispatch(fetchProductById(Number(productId)));
   }, [productId, dispatch]);
 
-  // Fetch similar products
+  // ✅ Fetch similar products
   useEffect(() => {
     if (productDetail?.subcategory_id) {
       dispatch(
@@ -71,7 +71,7 @@ const ProductDetail: React.FC = () => {
     }
   }, [productDetail, dispatch]);
 
-  // Add recently viewed
+  // ✅ Add recently viewed
   useEffect(() => {
     if (!productDetail) return;
     dispatch(
@@ -87,6 +87,7 @@ const ProductDetail: React.FC = () => {
     );
   }, [productDetail, dispatch]);
 
+  // ✅ Wishlist toggle
   const handleToggleWishlist = () => {
     if (!productDetail) return;
     if (!user) {
@@ -127,6 +128,7 @@ const ProductDetail: React.FC = () => {
     }
   };
 
+  // ✅ Buy now
   const handleBuyNow = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!productDetail) return;
@@ -150,11 +152,13 @@ const ProductDetail: React.FC = () => {
       },
       subtotal: finalPrice,
     };
+
     navigate("/checkout", {
       state: { directItems: [directItem], total: finalPrice },
     });
   };
 
+  // ✅ Add to cart
   const handleAddToCart = async (quantity = 1) => {
     if (!productDetail) return;
     if (!user) {
@@ -177,14 +181,22 @@ const ProductDetail: React.FC = () => {
           addCartItemThunk({ product_id: productDetail.id, quantity })
         ).unwrap();
       }
+    } catch (err) {
+      console.error("Cart update failed:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const scroll = (ref: React.RefObject<HTMLDivElement | null>, dir: "left" | "right") => {
+  const scroll = (
+    ref: React.RefObject<HTMLDivElement | null>,
+    dir: "left" | "right"
+  ) => {
     if (!ref.current) return;
-    ref.current.scrollBy({ left: dir === "left" ? -200 : 200, behavior: "smooth" });
+    ref.current.scrollBy({
+      left: dir === "left" ? -200 : 200,
+      behavior: "smooth",
+    });
   };
 
   if (detailLoading) return <Loader />;
@@ -203,18 +215,17 @@ const ProductDetail: React.FC = () => {
       <TopBar />
       <Header />
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8 space-y-12">
-<ProductInfo
-  productDetail={productDetail}
-  cartItem={cartItem}
-  wishlisted={wishlisted}
-  loading={loading}
-  user={user}  // ✅ add this line
-  handleBuyNow={handleBuyNow}
-  handleToggleWishlist={handleToggleWishlist}
-  handleAddToCart={handleAddToCart}
-  removeCartItem={(id) => dispatch(removeCartItemThunk(id))}
-/>
-
+        <ProductInfo
+          productDetail={productDetail}
+          cartItem={cartItem}
+          wishlisted={wishlisted}
+          loading={loading}
+          user={user} // ✅ keep passing this
+          handleBuyNow={handleBuyNow}
+          handleToggleWishlist={handleToggleWishlist}
+          handleAddToCart={handleAddToCart}
+          removeCartItem={(id) => dispatch(removeCartItemThunk(id))}
+        />
 
         {filteredSimilar.length > 0 && (
           <ProductCarousel

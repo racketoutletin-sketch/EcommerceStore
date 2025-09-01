@@ -1,7 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../redux/store";
-import { addCartItemThunk, updateCartItemThunk, removeCartItemThunk } from "../redux/features/cart/cartThunks";
+import {
+  addCartItemThunk,
+  updateCartItemThunk,
+  removeCartItemThunk,
+} from "../redux/features/cart/cartThunks";
 import BuyNowButton from "../components/ui/BuyNowButton";
 import CartButton from "../components/ui/CartButton";
 
@@ -28,15 +32,20 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  const user = useAppSelector((state) => state.auth.user); // ✅ move inside component
+  const user = useAppSelector((state) => state.auth.user);
   const cart = useAppSelector((state) => state.cart.cart);
   const cartItem = cart?.items?.find((item) => item.product.id === id);
   const inCart = !!cartItem;
 
-  // Add to cart
-  const handleAddToCart = async (quantity: number) => {
+  // ✅ Add to cart
+  const handleAddToCart = async (
+    quantity: number,
+    e: React.MouseEvent
+  ) => {
+    e.stopPropagation();
+
     if (!user) {
-      navigate("/login"); // redirect if not logged in
+      navigate("/login");
       return;
     }
 
@@ -45,9 +54,13 @@ const ProductCard: React.FC<ProductCardProps> = ({
     try {
       setLoadingCart(true);
       if (inCart && cartItem?.id) {
-        await dispatch(updateCartItemThunk({ id: cartItem.id, product_id: id, quantity })).unwrap();
+        await dispatch(
+          updateCartItemThunk({ id: cartItem.id, product_id: id, quantity })
+        ).unwrap();
       } else {
-        await dispatch(addCartItemThunk({ product_id: id, quantity })).unwrap();
+        await dispatch(
+          addCartItemThunk({ product_id: id, quantity })
+        ).unwrap();
       }
     } catch (err) {
       console.error("Cart update failed:", err);
@@ -56,11 +69,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
     }
   };
 
-  // Buy now
+  // ✅ Buy now
   const handleBuyNow = (e: React.MouseEvent) => {
     e.stopPropagation();
+
     if (!user) {
-      navigate("/login"); // redirect if not logged in
+      navigate("/login");
       return;
     }
 
@@ -79,7 +93,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
       subtotal: finalPrice,
     };
 
-    navigate("/checkout", { state: { directItems: [directItem], total: finalPrice } });
+    navigate("/checkout", {
+      state: { directItems: [directItem], total: finalPrice },
+    });
   };
 
   const handleView = () => navigate(`/products/${id}`);
@@ -103,7 +119,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
         <div className="mt-2 flex items-center space-x-2">
           {discounted_price ? (
             <>
-              <span className="text-red-500 font-bold text-lg">₹{discounted_price}</span>
+              <span className="text-red-500 font-bold text-lg">
+                ₹{discounted_price}
+              </span>
               <span className="text-gray-400 line-through">₹{price}</span>
             </>
           ) : (
@@ -113,7 +131,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
         <div className="opacity-0 group-hover:opacity-100 transition-opacity mt-2 flex items-center space-x-2">
           <BuyNowButton
-            onClick={(e) => handleBuyNow(e)}
+            onClick={handleBuyNow}
             aria-label="Buy Now"
             disabled={loadingCart}
           >
@@ -128,7 +146,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                   if (cartItem?.quantity === 1 && cartItem?.id) {
                     dispatch(removeCartItemThunk(cartItem.id));
                   } else if (cartItem?.quantity && cartItem?.id) {
-                    handleAddToCart(cartItem.quantity - 1);
+                    handleAddToCart(cartItem.quantity - 1, e);
                   }
                 }}
                 className="px-3 py-1 text-gray-700 hover:bg-gray-100 disabled:opacity-50"
@@ -140,10 +158,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
               <span className="px-4 py-1">{cartItem?.quantity ?? 1}</span>
 
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleAddToCart((cartItem?.quantity ?? 0) + 1);
-                }}
+                onClick={(e) => handleAddToCart((cartItem?.quantity ?? 0) + 1, e)}
                 disabled={loadingCart}
                 aria-label="Increase quantity"
                 className="px-3 py-1 text-gray-700 hover:bg-gray-100"
@@ -153,10 +168,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             </div>
           ) : (
             <CartButton
-              onClick={(e) => {
-                e.stopPropagation();
-                handleAddToCart(1);
-              }}
+              onClick={(e) => handleAddToCart(1, e)}
               disabled={loadingCart}
               aria-label="Add to cart"
               className="flex-1 bg-white-500 text-black py-1 rounded hover:bg-black border disabled:opacity-50"
