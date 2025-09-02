@@ -17,8 +17,7 @@ class Category(models.Model):
     name = models.CharField(max_length=100, unique=True, db_index=True)
     slug = models.SlugField(max_length=120, unique=True, blank=True, db_index=True)
     description = models.TextField(blank=True, null=True)
-    image = models.ImageField(storage=get_supabase_storage,
-        upload_to="category_images/", blank=True, null=True)
+    image = models.ImageField(storage=SupabaseStorage, upload_to="category_images/", blank=True, null=True)
     image_url = models.URLField(blank=True, null=True)
     is_active = models.BooleanField(default=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
@@ -58,8 +57,7 @@ class SubCategory(models.Model):
     slug = models.SlugField(max_length=120, unique=True, blank=True, db_index=True)
     parent_category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='subcategories', db_index=True)
     description = models.TextField(blank=True, null=True)
-    image = models.ImageField(storage=get_supabase_storage,
-        upload_to="subcategory_images/", blank=True, null=True)
+    image = models.ImageField(storage=SupabaseStorage, upload_to="subcategory_images/", blank=True, null=True)
     image_url = models.URLField(blank=True, null=True)
     is_featured = models.BooleanField(default=False, db_index=True)
     is_active = models.BooleanField(default=True, db_index=True)
@@ -111,8 +109,7 @@ class Product(models.Model):
     dimensions = models.CharField(max_length=100, blank=True, null=True)
     material = models.CharField(max_length=100, blank=True, null=True)
 
-    main_image = models.ImageField(storage=get_supabase_storage,
-        upload_to="product_main_images/", blank=True, null=True)
+    main_image = models.ImageField(storage=SupabaseStorage, upload_to="product_main_images/", blank=True, null=True)
     main_image_url = models.URLField(blank=True, null=True)
 
     extra_attributes = models.JSONField(blank=True, null=True)
@@ -163,8 +160,7 @@ class Product(models.Model):
 # -------------------------------
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images', db_index=True)
-    image = models.ImageField(storage=get_supabase_storage,
-        upload_to="product_images/")
+    image = models.ImageField(storage=SupabaseStorage, upload_to="product_images/")
     image_url = models.URLField(blank=True, null=True)
     alt_text = models.CharField(max_length=255, blank=True, null=True, db_index=True)
     is_primary = models.BooleanField(default=False, db_index=True)
