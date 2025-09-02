@@ -9,6 +9,8 @@ backend/**/*.pyd
 backend/**/*.pyc
 
 
+
+
 # General Python cache (anywhere, just in case)
 __pycache__/
 *.py[cod]
@@ -46,3 +48,13 @@ dist-ssr
 
 ecomR/
 mine/
+# Virtual environment
+RacketOutlet_Backend/venv/
+
+# Static files collected for deployment
+RacketOutlet_Backend/staticfiles/
+
+# Python cache
+__pycache__/
+*.pyc
+/
