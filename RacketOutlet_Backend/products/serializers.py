@@ -28,8 +28,7 @@ class InventorySerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True, read_only=True)
     inventory = InventorySerializer(read_only=True)
-    current_price = serializers.DecimalField(
-        max_digits=10, decimal_places=2, read_only=True)
+    current_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     sub_category_id = serializers.IntegerField(source='subcategory.id', read_only=True)
     sub_category_name = serializers.CharField(source='subcategory.name', read_only=True)
 
