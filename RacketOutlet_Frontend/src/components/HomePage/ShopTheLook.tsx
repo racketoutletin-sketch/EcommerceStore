@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import axios from "../../api/axios"; // your axios instance
+import Loader from "../Loader";
 
 interface Product {
   id: number;
   name: string;
-  price: number; // should be number (API returns number, not string)
+  price: number;
   main_image_url: string;
   slug: string;
 }
@@ -24,22 +25,62 @@ interface ShopTheLookData {
   hotspots: Hotspot[];
 }
 
+// LocalStorage cache keys
+const CACHE_KEY = "shop_the_look_data";
+const CACHE_VERSION_KEY = "shop_the_look_cache_version";
+
 const ShopTheLook = () => {
   const [data, setData] = useState<ShopTheLookData | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get("https://wzonllfccvmvoftahudd.supabase.co/functions/v1/get-homepage-data").then((res) => {
-      const shopData = res.data.shopTheLook[0]; // ✅ correct path
-      setData(shopData);
-
-      if (shopData.hotspots.length > 0) {
-        setSelectedProduct(shopData.hotspots[0].product);
+    // 1️⃣ Load cached data immediately
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      try {
+        const parsed: ShopTheLookData = JSON.parse(cached);
+        setData(parsed);
+        if (parsed.hotspots.length > 0) setSelectedProduct(parsed.hotspots[0].product);
+        setLoading(false);
+      } catch {
+        console.warn("Corrupt cache, ignoring...");
       }
-    });
+    }
+
+    // 2️⃣ Fetch fresh data in background
+    const fetchData = async () => {
+      try {
+        const res = await axios.get<{ shopTheLook: ShopTheLookData[]; version: number }>(
+          "https://wzonllfccvmvoftahudd.supabase.co/functions/v1/get-homepage-data"
+        );
+
+        const shopData = res.data.shopTheLook[0];
+        const newVersion = res.data.version ?? 1;
+        const oldVersion = Number(localStorage.getItem(CACHE_VERSION_KEY));
+
+        if (newVersion !== oldVersion) {
+          console.log(`ShopTheLook cache updated ${oldVersion} → ${newVersion}`);
+          localStorage.setItem(CACHE_KEY, JSON.stringify(shopData));
+          localStorage.setItem(CACHE_VERSION_KEY, newVersion.toString());
+          setData(shopData);
+          if (shopData.hotspots.length > 0) setSelectedProduct(shopData.hotspots[0].product);
+        } else {
+          console.log("ShopTheLook cache still valid, no update needed");
+        }
+      } catch (err) {
+        console.error("Error fetching ShopTheLook:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  if (!data || !selectedProduct) return <div>Loading...</div>;
+  if (loading) return <Loader/>;
+  if (!data || !selectedProduct)
+    return <p className="text-center text-gray-500 py-16">No Shop the Look data available.</p>;
 
   return (
     <div className="mb-8 w-full">
@@ -52,7 +93,6 @@ const ShopTheLook = () => {
             alt="Player"
             className="w-full h-full object-cover"
           />
-
           {data.hotspots.map((hotspot) => (
             <div
               key={hotspot.id}
@@ -61,7 +101,7 @@ const ShopTheLook = () => {
               style={{
                 top: `${hotspot.top}px`,
                 left: hotspot.left ? `${hotspot.left}px` : undefined,
-                right: hotspot.right ? `${hotspot.right}px` : undefined,
+                right: hotspot.right ? `${hotspot.right}px` : undefined
               }}
             ></div>
           ))}
@@ -69,7 +109,7 @@ const ShopTheLook = () => {
 
         {/* Selected Product */}
         <div className="border border-gray-200 text-black rounded-lg p-4 md:col-span-2 flex flex-col">
-          <span className="block text-center">
+          <span className="block text-center mb-2">
             <span className="block text-sm tracking-widest text-gray-500 uppercase mb-1">
               Player’s Choice
             </span>
@@ -79,11 +119,11 @@ const ShopTheLook = () => {
           </span>
 
           <img
-            src={selectedProduct.main_image_url || '/default.png'}
+            src={selectedProduct.main_image_url || "/default.png"}
             alt={selectedProduct.name}
             className="w-full h-full object-cover mb-5 rounded"
             onError={(e) => {
-              (e.currentTarget as HTMLImageElement).src = '/default.png';
+              (e.currentTarget as HTMLImageElement).src = "/default.png";
             }}
           />
 

@@ -5,17 +5,20 @@ from django.core.validators import MinValueValidator
 from common.supabase_storage_backend import SupabaseStorage
 
 
+
 def get_supabase_storage():
     return SupabaseStorage()
+
 
 # -------------------------------
 # Category Model
 # -------------------------------
 class Category(models.Model):
-    name = models.CharField(max_length=100, unique=True, db_index=True)  # indexed
+    name = models.CharField(max_length=100, unique=True, db_index=True)
     slug = models.SlugField(max_length=120, unique=True, blank=True, db_index=True)
     description = models.TextField(blank=True, null=True)
-    image = models.ImageField(storage=SupabaseStorage, upload_to="category_images/", blank=True, null=True)
+    image = models.ImageField(storage=get_supabase_storage,
+        upload_to="category_images/", blank=True, null=True)
     image_url = models.URLField(blank=True, null=True)
     is_active = models.BooleanField(default=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
@@ -37,9 +40,11 @@ class Category(models.Model):
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
 
-        if self.image and not self.image_url:
-            self.image_url = SupabaseStorage.url(self.image.name)
-            super().save(update_fields=["image_url"])
+        if self.image:
+            new_url = self.image.storage.url(self.image.name)
+            if self.image_url != new_url:
+                self.image_url = new_url
+                super().save(update_fields=["image_url"])
 
     def __str__(self):
         return self.name
@@ -53,7 +58,8 @@ class SubCategory(models.Model):
     slug = models.SlugField(max_length=120, unique=True, blank=True, db_index=True)
     parent_category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='subcategories', db_index=True)
     description = models.TextField(blank=True, null=True)
-    image = models.ImageField(storage=SupabaseStorage, upload_to="subcategory_images/", blank=True, null=True)
+    image = models.ImageField(storage=get_supabase_storage,
+        upload_to="subcategory_images/", blank=True, null=True)
     image_url = models.URLField(blank=True, null=True)
     is_featured = models.BooleanField(default=False, db_index=True)
     is_active = models.BooleanField(default=True, db_index=True)
@@ -77,9 +83,11 @@ class SubCategory(models.Model):
             self.slug = slugify(f"{self.parent_category.name}-{self.name}")
         super().save(*args, **kwargs)
 
-        if self.image and not self.image_url:
-            self.image_url = SupabaseStorage.url(self.image.name)
-            super().save(update_fields=["image_url"])
+        if self.image:
+            new_url = self.image.storage.url(self.image.name)
+            if self.image_url != new_url:
+                self.image_url = new_url
+                super().save(update_fields=["image_url"])
 
     def __str__(self):
         return f"{self.parent_category.name} -> {self.name}"
@@ -103,7 +111,8 @@ class Product(models.Model):
     dimensions = models.CharField(max_length=100, blank=True, null=True)
     material = models.CharField(max_length=100, blank=True, null=True)
 
-    main_image = models.ImageField(storage=SupabaseStorage, upload_to="product_main_images/", blank=True, null=True)
+    main_image = models.ImageField(storage=get_supabase_storage,
+        upload_to="product_main_images/", blank=True, null=True)
     main_image_url = models.URLField(blank=True, null=True)
 
     extra_attributes = models.JSONField(blank=True, null=True)
@@ -130,12 +139,16 @@ class Product(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(f"{self.subcategory.parent_category.name}-{self.subcategory.name}-{self.name}")
+            self.slug = slugify(
+                f"{self.subcategory.parent_category.name}-{self.subcategory.name}-{self.name}"
+            )
         super().save(*args, **kwargs)
 
-        if self.main_image and not self.main_image_url:
-            self.main_image_url = SupabaseStorage.url(self.main_image.name)
-            super().save(update_fields=["main_image_url"])
+        if self.main_image:
+            new_url = self.main_image.storage.url(self.main_image.name)
+            if self.main_image_url != new_url:
+                self.main_image_url = new_url
+                super().save(update_fields=["main_image_url"])
 
     def __str__(self):
         return f"{self.subcategory.name} -> {self.name}" + (f" ({self.brand})" if self.brand else "")
@@ -150,7 +163,8 @@ class Product(models.Model):
 # -------------------------------
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images', db_index=True)
-    image = models.ImageField(storage=SupabaseStorage, upload_to="product_images/")
+    image = models.ImageField(storage=get_supabase_storage,
+        upload_to="product_images/")
     image_url = models.URLField(blank=True, null=True)
     alt_text = models.CharField(max_length=255, blank=True, null=True, db_index=True)
     is_primary = models.BooleanField(default=False, db_index=True)
@@ -165,9 +179,11 @@ class ProductImage(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
-        if self.image and not self.image_url:
-            self.image_url = SupabaseStorage.url(self.image.name)
-            super().save(update_fields=["image_url"])
+        if self.image:
+            new_url = self.image.storage.url(self.image.name)
+            if self.image_url != new_url:
+                self.image_url = new_url
+                super().save(update_fields=["image_url"])
 
     def __str__(self):
         return f"{self.product.name} Image"

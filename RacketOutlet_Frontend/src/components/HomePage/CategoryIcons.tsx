@@ -1,62 +1,101 @@
-import { useEffect, useState } from "react";
-import api from "../../api/axios";
+// src/components/HomepageSubcategories.tsx
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Loader from "../Loader";
 
-const CategoryIcons = () => {
-  const [categories, setCategories] = useState<any[]>([]);
+interface Subcategory {
+  id: number;
+  name: string;
+  description: string;
+  image: string;
+}
+
+const CACHE_KEY = "Featuredsubcategories_data";
+const CACHE_VERSION_KEY = "Featuredsubcategories_cache_version";
+
+const HomepageSubcategories: React.FC = () => {
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await api.get(
-          "https://wzonllfccvmvoftahudd.supabase.co/functions/v1/get-homepage-categories"
-        );
+  // Step 1: Load cached immediately
+  const cachedData = localStorage.getItem(CACHE_KEY);
+  if (cachedData) {
+    try {
+      setSubcategories(JSON.parse(cachedData));
+      setLoading(false);
+    } catch {
+      console.warn("Corrupt cache, ignoring...");
+    }
+  }
 
-        // ✅ Fix: use `categories` instead of `results`
-        setCategories(res.data.sub_categories || []);
-      } catch (err) {
-        console.error("Error fetching categories:", err);
-      }
-    };
+  // Step 2: Always fetch fresh version in background
+  const fetchSubcategories = async () => {
+  console.log("fetchSubcategories started...");
+  try {
+    const res = await fetch(
+      "https://wzonllfccvmvoftahudd.supabase.co/functions/v1/get-homepage-categories"
+    );
+    if (!res.ok) throw new Error(`API Error: ${res.status}`);
 
-    fetchCategories();
-  }, []);
+    const data = await res.json();
+    console.log("API response:", data);
+
+    const newVersion = data.version ?? 1;
+    const oldVersion = Number(localStorage.getItem(CACHE_VERSION_KEY));
+
+    if (newVersion !== oldVersion) {
+      console.log(`Version changed ${oldVersion} → ${newVersion}`);
+      const freshData: Subcategory[] = data.sub_categories || [];
+      localStorage.setItem(CACHE_KEY, JSON.stringify(freshData));
+      localStorage.setItem(CACHE_VERSION_KEY, newVersion.toString());
+      setSubcategories(freshData);
+    } else {
+      console.log("Cache still valid, no update needed");
+    }
+  } catch (err) {
+    console.error("Error in fetchSubcategories:", err);
+  } finally {
+    // ✅ Always stop loading after API finishes
+    setLoading(false);
+  }
+};
+
+
+  fetchSubcategories(); // ✅ make sure it's called
+}, []);
+
+
+  if (loading) return <Loader />;
+  if (subcategories.length === 0)
+    return <p className="text-center py-16">No categories available.</p>;
 
   return (
-    <div className="mb-12">
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
-        {categories.map((cat) => (
-          <a
+    <div className="mb-8">
+      <h2 className="text-2xl font-bold mb-6 text-gray-900 mt-6">Explore Categories</h2>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+        {subcategories.map((cat) => (
+          <div
             key={cat.id}
-            href={`/subcategories/${cat.id}/products`}
-            className="group flex flex-col items-start"
+            className="border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition p-4"
+            onClick={() => navigate(`/subcategories/${cat.id}`)}
           >
-            {/* Image Box */}
-            <div className="bg-gray-100 shadow-md hover:shadow-xl transition-shadow rounded-xl w-full h-64 overflow-hidden">
-              <img
-                src={cat.image || "/default.png"} // ✅ direct field
-                alt={cat.name}
-                className="w-auto max-h-full mx-auto object-contain transition-transform duration-300 transform group-hover:scale-105"
-              />
-            </div>
-
-            {/* Text + Arrow */}
-            <div className="mt-4 flex items-center justify-between w-full">
-              <div className="relative">
-                <h3 className="text-lg font-bold text-gray-900 relative inline-block">
-                  {cat.name}
-                  <span className="absolute left-1/2 bottom-0 w-0 h-0.5 bg-gray-400 transition-all duration-300 group-hover:w-full group-hover:-translate-x-1/2"></span>
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">{cat.description}</p>
-              </div>
-              <span className="text-xl text-gray-900 transition-transform duration-300 transform group-hover:-rotate-90 ml-4">
-                →
-              </span>
-            </div>
-          </a>
+            <img
+              src={cat.image || "/default.png"}
+              alt={cat.name}
+              className="w-full h-48 object-cover"
+              onError={(e) => {
+                e.currentTarget.src = "/default.png";
+              }}
+            />
+            <h3 className="text-black font-semibold text-base mt-3">{cat.name}</h3>
+            <p className="text-gray-500 text-sm mt-1 line-clamp-2">{cat.description}</p>
+          </div>
         ))}
       </div>
     </div>
   );
 };
 
-export default CategoryIcons;
+export default HomepageSubcategories;

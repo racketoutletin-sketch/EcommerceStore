@@ -4,6 +4,7 @@ import Slider from "react-slick";
 import { useNavigate } from "react-router-dom";
 import "slick-carousel/slick/slick.css"; 
 import "slick-carousel/slick/slick-theme.css";
+import Loader from '../Loader';
 
 interface Banner {
   id: number;
@@ -16,19 +17,40 @@ interface Banner {
 
 const HeroBanners: React.FC = () => {
   const [banners, setBanners] = useState<Banner[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [sliderKey, setSliderKey] = useState(0); // Force Slick refresh
   const navigate = useNavigate();
 
-  // ✅ Fetch banners directly from Supabase Edge Function
   useEffect(() => {
     const fetchBanners = async () => {
       try {
         const res = await fetch(
           "https://wzonllfccvmvoftahudd.supabase.co/functions/v1/get-banners"
+          
         );
         const data = await res.json();
-        setBanners(data.banners || []);
+
+        const newVersion = data.version ?? 1;
+        const oldVersion = Number(localStorage.getItem("banners_cache_version"));
+
+        const cachedData = localStorage.getItem("banners_data");
+
+        if (newVersion !== oldVersion || !cachedData) {
+          // ✅ Cache is stale or first load → update storage and state
+          setBanners(data.banners || []);
+          localStorage.setItem("banners_data", JSON.stringify(data.banners || []));
+          localStorage.setItem("banners_cache_version", newVersion.toString());
+        } else {
+          // ✅ Use cached data
+          setBanners(JSON.parse(cachedData));
+        }
+
+        // ✅ Force Slider refresh
+        setSliderKey((prev) => prev + 1);
       } catch (err) {
-        console.error("Error fetching banners:", err);
+        // console.error("Error fetching banners:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -53,7 +75,6 @@ const HeroBanners: React.FC = () => {
     ),
   };
 
-  // ✅ Handle banner click
   const handleClick = (banner: Banner) => {
     if (banner.product_id) {
       navigate(`/products/${banner.product_id}`);
@@ -62,9 +83,17 @@ const HeroBanners: React.FC = () => {
     }
   };
 
+  if (loading) {
+    return <Loader />;
+  }
+
+  if (banners.length === 0) {
+    return <p className="text-center py-16">No banners available.</p>;
+  }
+
   return (
     <div className="mb-8">
-      <Slider {...settings}>
+      <Slider key={sliderKey} {...settings}>
         {banners.map((banner) => (
           <div
             key={banner.id}
@@ -72,10 +101,10 @@ const HeroBanners: React.FC = () => {
             onClick={() => handleClick(banner)}
           >
             <img
-              // 👇 Supabase storage URL (fix if needed)
               src={`https://wzonllfccvmvoftahudd.supabase.co/storage/v1/object/public/media/${banner.image}`}
               alt={banner.title}
               className="w-full h-full object-cover"
+              loading="lazy"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent flex flex-col justify-end p-6">
               <h2 className="text-white text-3xl md:text-5xl font-bold">
