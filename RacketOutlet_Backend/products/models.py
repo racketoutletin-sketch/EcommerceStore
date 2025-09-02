@@ -17,8 +17,7 @@ class Category(models.Model):
     slug = models.SlugField(max_length=120, unique=True, blank=True, db_index=True)
     description = models.TextField(blank=True, null=True)
     image = models.ImageField(
-        storage=get_supabase_storage(),
-        upload_to="category_images/",
+       storage=SupabaseStorage, upload_to="category_images/",
         blank=True, null=True
     )
     image_url = models.URLField(blank=True, null=True)
@@ -64,8 +63,7 @@ class SubCategory(models.Model):
     )
     description = models.TextField(blank=True, null=True)
     image = models.ImageField(
-        storage=get_supabase_storage(),
-        upload_to="subcategory_images/",
+       storage=SupabaseStorage, upload_to="subcategory_images/",
         blank=True, null=True
     )
     image_url = models.URLField(blank=True, null=True)
@@ -124,8 +122,7 @@ class Product(models.Model):
     material = models.CharField(max_length=100, blank=True, null=True)
 
     main_image = models.ImageField(
-        storage=get_supabase_storage(),
-        upload_to="product_main_images/",
+       storage=SupabaseStorage, upload_to="product_main_images/",
         blank=True, null=True
     )
     main_image_url = models.URLField(blank=True, null=True)
@@ -177,8 +174,7 @@ class Product(models.Model):
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images', db_index=True)
     image = models.ImageField(
-        storage=get_supabase_storage(),
-        upload_to="product_images/"
+       storage=SupabaseStorage, upload_to="product_images/"
     )
     image_url = models.URLField(blank=True, null=True)
     alt_text = models.CharField(max_length=255, blank=True, null=True, db_index=True)
