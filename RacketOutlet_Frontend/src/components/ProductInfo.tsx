@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import BuyNowButton from "./ui/BuyNowButton";
 import CartButton from "./ui/CartButton";
+import { FaHeart, FaRegHeart } from "react-icons/fa";
 
 interface ProductInfoProps {
   productDetail: any;
@@ -37,109 +38,114 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
   };
 
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-lg">
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* Images */}
-        <div className="flex-1">
-          <img
-            src={productDetail.main_image_url || "/placeholder.png"}
-            alt={productDetail.name}
-            className="w-full h-96 object-cover rounded-2xl mb-4"
-          />
-        </div>
+    <div className="bg-white rounded-3xl shadow-xl p-6 transition-all duration-300 hover:shadow-2xl">
+      {/* Product Info */}
+      <div className="flex flex-col gap-6">
+        <h1 className="text-4xl font-extrabold text-gray-900">{productDetail.name}</h1>
+        <p className="text-gray-600 text-lg">{productDetail.description}</p>
 
-        {/* Product Details */}
-        <div className="flex-1 flex flex-col gap-4">
-          <h1 className="text-3xl font-bold text-gray-800">
-            {productDetail.name}
-          </h1>
-          <p className="text-gray-600">{productDetail.description}</p>
-
-          <div className="flex items-center gap-4">
-            {productDetail.discounted_price ? (
-              <>
-                <span className="text-2xl font-bold text-red-600">
-                  ₹{productDetail.discounted_price}
-                </span>
-                <span className="text-gray-400 line-through">
-                  ₹{productDetail.price}
-                </span>
-              </>
-            ) : (
-              <span className="text-2xl font-bold text-red-600">
+        {/* Price */}
+        <div className="flex items-center gap-4">
+          {productDetail.discounted_price ? (
+            <>
+              <span className="text-3xl font-bold text-red-600">
+                ₹{productDetail.discounted_price}
+              </span>
+              <span className="text-gray-400 line-through text-xl">
                 ₹{productDetail.price}
               </span>
-            )}
-          </div>
-
-          {/* Inventory Info */}
-          {productDetail.inventory && (
-            <p
-              className={`text-sm ${
-                productDetail.inventory.is_low_stock
-                  ? "text-red-600"
-                  : "text-green-600"
-              }`}
-            >
-              {productDetail.inventory.is_low_stock
-                ? "Low Stock"
-                : `In Stock: ${productDetail.inventory.quantity}`}
-            </p>
+            </>
+          ) : (
+            <span className="text-3xl font-bold text-gray-900">₹{productDetail.price}</span>
           )}
+        </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-4 mt-4">
-            {/* Buy Now */}
-            <BuyNowButton
-              onClick={(e) => redirectIfNotLoggedIn() && handleBuyNow(e)}
-            >
-              Buy Now
-            </BuyNowButton>
+        {/* Inventory Badge */}
+        {productDetail.inventory && (
+          <p
+            className={`text-sm font-semibold ${
+              productDetail.inventory.is_low_stock ? "text-red-600" : "text-green-600"
+            }`}
+          >
+            {productDetail.inventory.is_low_stock
+              ? "⚠️ Low Stock"
+              : `In Stock: ${productDetail.inventory.quantity}`}
+          </p>
+        )}
 
-            {/* Wishlist */}
-            <button
-              onClick={() => redirectIfNotLoggedIn() && handleToggleWishlist()}
-              className={`py-2 px-4 rounded border ${
-                wishlisted ? "bg-red-500 text-white" : "bg-white text-gray-700"
-              } hover:bg-gray-100`}
-            >
-              {wishlisted ? "❤️ Wishlisted" : "♡ Wishlist"}
-            </button>
-
-            {/* Cart */}
-            {cartItem ? (
-              <div className="flex items-center border rounded">
-                <button
-                  onClick={() => {
-                    if (!redirectIfNotLoggedIn()) return;
-                    if (cartItem.quantity === 1) removeCartItem(cartItem.id);
-                    else handleAddToCart(cartItem.quantity - 1);
-                  }}
-                  className="px-3 py-1 text-gray-700 hover:bg-gray-100 disabled:opacity-50"
-                  disabled={loading}
-                >
-                  -
-                </button>
-                <span className="px-4 py-1">{cartItem.quantity}</span>
-                <button
-                  onClick={() => {
-                    if (!redirectIfNotLoggedIn()) return;
-                    handleAddToCart(cartItem.quantity + 1);
-                  }}
-                  className="px-3 py-1 text-gray-700 hover:bg-gray-100"
-                >
-                  +
-                </button>
+        {/* Extra Attributes Grid */}
+        {productDetail.extra_attributes && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            {Object.entries(productDetail.extra_attributes).map(([section, attributes]) => (
+              <div key={section} className="bg-gray-50 p-4 rounded-xl shadow-sm">
+                <h3 className="font-semibold text-gray-700 mb-2">{section}</h3>
+                <ul className="text-gray-600 space-y-1 text-sm">
+                  {Object.entries(attributes as Record<string, any>).map(([key, value]) => (
+                    <li key={key}>
+                      <span className="font-medium">{key}:</span>{" "}
+                      {Array.isArray(value) ? value.join(", ") : value}
+                    </li>
+                  ))}
+                </ul>
               </div>
-            ) : (
-              <CartButton
-                onClick={() => redirectIfNotLoggedIn() && handleAddToCart(1)}
+            ))}
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex flex-wrap gap-3 mt-6">
+          <BuyNowButton
+            onClick={(e) => redirectIfNotLoggedIn() && handleBuyNow(e)}
+            className="px-6 py-3 text-lg rounded-xl"
+          >
+            Buy Now
+          </BuyNowButton>
+
+          <button
+            onClick={() => redirectIfNotLoggedIn() && handleToggleWishlist()}
+            className={`flex items-center gap-2 px-5 py-3 rounded-xl border transition-colors ${
+              wishlisted
+                ? "bg-red-500 text-white border-red-500 hover:bg-red-600"
+                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
+            }`}
+          >
+            {wishlisted ? <FaHeart /> : <FaRegHeart />}
+            {wishlisted ? "Wishlisted" : "Wishlist"}
+          </button>
+
+          {cartItem ? (
+            <div className="flex items-center border rounded-xl overflow-hidden">
+              <button
+                onClick={() => {
+                  if (!redirectIfNotLoggedIn()) return;
+                  if (cartItem.quantity === 1) removeCartItem(cartItem.id);
+                  else handleAddToCart(cartItem.quantity - 1);
+                }}
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
                 disabled={loading}
               >
-                {loading ? "Adding..." : "Add Cart"}
-              </CartButton>
-            )}
-          </div>
+                -
+              </button>
+              <span className="px-5 py-2 font-medium">{cartItem.quantity}</span>
+              <button
+                onClick={() => {
+                  if (!redirectIfNotLoggedIn()) return;
+                  handleAddToCart(cartItem.quantity + 1);
+                }}
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200"
+              >
+                +
+              </button>
+            </div>
+          ) : (
+            <CartButton
+              onClick={() => redirectIfNotLoggedIn() && handleAddToCart(1)}
+              disabled={loading}
+              className="px-6 py-3 text-lg rounded-xl"
+            >
+              {loading ? "Adding..." : "Add Cart"}
+            </CartButton>
+          )}
         </div>
       </div>
     </div>

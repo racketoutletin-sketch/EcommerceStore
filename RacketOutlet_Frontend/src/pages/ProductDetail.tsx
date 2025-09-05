@@ -22,15 +22,17 @@ import Loader from "../components/Loader";
 import ProductInfo from "../components/ProductInfo";
 import ProductCarousel from "../components/ProductCarousel";
 import { fetchProductsBySubCategory } from "../redux/features/products/productsListViewSlice";
+import { getFinalImageUrl } from "../utils/imageUtils";  // ✅ import utility
 
 const ProductDetail: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
+
   const [loading, setLoading] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const user = useSelector((state: RootState) => state.auth.user);
-
   const { productDetail, loading: detailLoading, error } = useSelector(
     (state: RootState) => state.productView
   );
@@ -53,13 +55,12 @@ const ProductDetail: React.FC = () => {
   const similarRef = useRef<HTMLDivElement>(null);
   const recentRef = useRef<HTMLDivElement>(null);
 
-  // ✅ Fetch product detail
   useEffect(() => {
-    if (!productId) return;
-    dispatch(fetchProductById(Number(productId)));
+    if (productId) {
+      dispatch(fetchProductById(Number(productId)));
+    }
   }, [productId, dispatch]);
 
-  // ✅ Fetch similar products
   useEffect(() => {
     if (productDetail?.subcategory_id) {
       dispatch(
@@ -71,7 +72,6 @@ const ProductDetail: React.FC = () => {
     }
   }, [productDetail, dispatch]);
 
-  // ✅ Add recently viewed
   useEffect(() => {
     if (!productDetail) return;
     dispatch(
@@ -79,7 +79,10 @@ const ProductDetail: React.FC = () => {
         id: productDetail.id,
         name: productDetail.name,
         description: productDetail.description ?? "",
-        main_image_url: productDetail.main_image_url || "/placeholder.png",
+        main_image_url: getFinalImageUrl(
+          productDetail.main_image,
+          productDetail.main_image_url
+        ),
         price: Number(productDetail.price),
         discounted_price: productDetail.discounted_price ?? null,
         brand: productDetail.brand ?? "",
@@ -87,7 +90,6 @@ const ProductDetail: React.FC = () => {
     );
   }, [productDetail, dispatch]);
 
-  // ✅ Wishlist toggle
   const handleToggleWishlist = () => {
     if (!productDetail) return;
     if (!user) {
@@ -113,7 +115,10 @@ const ProductDetail: React.FC = () => {
           product: {
             id: productDetail.id,
             name: productDetail.name,
-            main_image_url: productDetail.main_image_url || "/placeholder.png",
+            main_image_url: getFinalImageUrl(
+              productDetail.main_image,
+              productDetail.main_image_url
+            ),
             price: Number(productDetail.price),
             discounted_price: productDetail.discounted_price ?? undefined,
             brand: productDetail.brand ?? "",
@@ -128,7 +133,6 @@ const ProductDetail: React.FC = () => {
     }
   };
 
-  // ✅ Buy now
   const handleBuyNow = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!productDetail) return;
@@ -145,7 +149,10 @@ const ProductDetail: React.FC = () => {
       product: {
         id: productDetail.id,
         name: productDetail.name,
-        main_image_url: productDetail.main_image_url || "/placeholder.png",
+        main_image_url: getFinalImageUrl(
+          productDetail.main_image,
+          productDetail.main_image_url
+        ),
         price: Number(productDetail.price),
         discounted_price: productDetail.discounted_price ?? undefined,
         current_price: finalPrice,
@@ -158,7 +165,6 @@ const ProductDetail: React.FC = () => {
     });
   };
 
-  // ✅ Add to cart
   const handleAddToCart = async (quantity = 1) => {
     if (!productDetail) return;
     if (!user) {
@@ -192,17 +198,40 @@ const ProductDetail: React.FC = () => {
     ref: React.RefObject<HTMLDivElement | null>,
     dir: "left" | "right"
   ) => {
-    if (!ref.current) return;
-    ref.current.scrollBy({
-      left: dir === "left" ? -200 : 200,
-      behavior: "smooth",
-    });
+    if (ref.current) {
+      ref.current.scrollBy({
+        left: dir === "left" ? -200 : 200,
+        behavior: "smooth",
+      });
+    }
   };
 
   if (detailLoading) return <Loader />;
   if (error) return <p className="text-red-500 text-center mt-6">{error}</p>;
   if (!productDetail)
     return <p className="text-gray-500 text-center mt-6">Product not found</p>;
+
+  // ✅ unified images
+  const finalImages: string[] = [
+    getFinalImageUrl(productDetail.main_image, productDetail.main_image_url),
+    ...(productDetail.images
+      ? productDetail.images
+          .map((img) => img?.image_url)
+          .filter((url): url is string => !!url)
+      : []),
+  ];
+
+  const handlePrev = () => {
+    setCurrentIndex((prev) =>
+      prev === 0 ? finalImages.length - 1 : prev - 1
+    );
+  };
+
+  const handleNext = () => {
+    setCurrentIndex((prev) =>
+      prev === finalImages.length - 1 ? 0 : prev + 1
+    );
+  };
 
   const filteredSimilar =
     subCatProducts?.filter((p) => p.id !== productDetail.id) || [];
@@ -214,13 +243,57 @@ const ProductDetail: React.FC = () => {
     <div className="w-full bg-gray-50 min-h-screen">
       <TopBar />
       <Header />
+
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+        {/* ✅ Main Image Viewer */}
+        <div className="relative w-full max-w-2xl mx-auto">
+          <img
+            src={finalImages[currentIndex]}
+            alt={productDetail.name}
+            className="w-full h-96 object-contain rounded-xl shadow"
+          />
+
+          {finalImages.length > 1 && (
+            <>
+              <button
+                onClick={handlePrev}
+                className="absolute top-1/2 left-2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-black/50 text-white rounded-full hover:bg-black/70 transition"
+              >
+                ‹
+              </button>
+              <button
+                onClick={handleNext}
+                className="absolute top-1/2 right-2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-black/50 text-white rounded-full hover:bg-black/70 transition"
+              >
+                ›
+              </button>
+
+              <div className="flex justify-center mt-4 gap-2">
+                {finalImages.map((img, idx) => (
+                  <img
+                    key={idx}
+                    src={img}
+                    alt={`thumb-${idx}`}
+                    className={`w-14 h-14 object-cover rounded-md border-2 cursor-pointer ${
+                      idx === currentIndex
+                        ? "border-black"
+                        : "border-transparent"
+                    }`}
+                    onClick={() => setCurrentIndex(idx)}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* ✅ Product Info */}
         <ProductInfo
           productDetail={productDetail}
           cartItem={cartItem}
           wishlisted={wishlisted}
           loading={loading}
-          user={user} // ✅ keep passing this
+          user={user}
           handleBuyNow={handleBuyNow}
           handleToggleWishlist={handleToggleWishlist}
           handleAddToCart={handleAddToCart}

@@ -28,6 +28,7 @@ export interface ProductDetailType {
   weight?: number | null;
   dimensions?: string | null;
   material?: string | null;
+  main_image?:string | null;
   main_image_url: string;
   extra_attributes?: any;
   is_featured: boolean;

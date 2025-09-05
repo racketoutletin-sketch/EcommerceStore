@@ -10,7 +10,7 @@ interface Product {
   current_price: number;
   discounted_price?: number | null;
   images?: string[];
-  main_image?: string | null;
+  main_image_url?: string | null;
   quantity: number;
   description?: string;
   extra_attributes?: { type?: string } | null;

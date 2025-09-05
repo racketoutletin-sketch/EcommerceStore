@@ -15,17 +15,26 @@ import {
   faCog,
 } from "@fortawesome/free-solid-svg-icons";
 
+interface Category {
+  id: number;
+  name: string;
+  description: string;
+  image: string;
+}
+
 const Header: React.FC = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cacheVersion, setCacheVersion] = useState<number>(1); // track cache version
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Simulating auth state – replace with your Redux selector
   const accessToken = localStorage.getItem("access_token");
 
+  // Fetch categories with cache version
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -33,11 +42,11 @@ const Header: React.FC = () => {
         const res = await fetch(
           "https://wzonllfccvmvoftahudd.supabase.co/functions/v1/get-featured-categories"
         );
-
         if (!res.ok) throw new Error("Failed to fetch categories");
 
         const data = await res.json();
-        setCategories(data.featured_categories || []); // 👈 adjust based on your API response shape
+        setCategories(data.featured_categories || []);
+        if (data.version) setCacheVersion(data.version); // update cache version
       } catch (err) {
         console.error(err);
         setCategories([]);
@@ -49,7 +58,7 @@ const Header: React.FC = () => {
     fetchCategories();
   }, []);
 
-  // Close dropdown when clicking outside
+  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -59,13 +68,11 @@ const Header: React.FC = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-  const dispatch = useAppDispatch();
-    const handleLogout = () => {
-      dispatch(logout());   // 👈 clears tokens + user properly
-      navigate("/login");
-    };
-  
 
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/login");
+  };
 
   const handleProfileClick = () => {
     if (!accessToken) navigate("/login");
@@ -85,8 +92,8 @@ const Header: React.FC = () => {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex flex-wrap space-x-6 items-center">
           {loading ? (
-            <Loader/>
-          ) : categories.length > 0 ? (
+            <Loader />
+          ) : categories.length ? (
             categories.map((cat) => (
               <Link
                 key={cat.id}
@@ -101,22 +108,18 @@ const Header: React.FC = () => {
           )}
         </nav>
 
-        {/* Icons & Mobile Menu Button */}
+        {/* Icons & Profile */}
         <div className="flex items-center space-x-4 relative">
-          {/* Search */}
           <button
             className="text-lg md:text-xl"
             onClick={() => navigate("/search")}
           >
             <FontAwesomeIcon icon={faSearch} />
           </button>
-
-          {/* Cart */}
           <Link to="/cart" className="text-lg md:text-xl">
             <FontAwesomeIcon icon={faShoppingCart} />
           </Link>
 
-          {/* Profile / Dropdown */}
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={handleProfileClick}
@@ -154,7 +157,6 @@ const Header: React.FC = () => {
             )}
           </div>
 
-          {/* Mobile Menu Toggle */}
           <button
             className="md:hidden text-xl"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -164,7 +166,7 @@ const Header: React.FC = () => {
         </div>
       </div>
 
-      {/* Mobile Sliding Menu */}
+      {/* Mobile Menu */}
       <div
         className={`fixed top-0 left-0 w-64 h-full bg-white shadow-lg z-50 transform transition-transform duration-300 ease-in-out ${
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
@@ -172,8 +174,8 @@ const Header: React.FC = () => {
       >
         <div className="p-6 flex flex-col space-y-4">
           {loading ? (
-            <Loader/>
-          ) : categories.length > 0 ? (
+            <Loader />
+          ) : categories.length ? (
             categories.map((cat) => (
               <Link
                 key={cat.id}

@@ -14,7 +14,7 @@ interface Product {
   current_price: number;
   sku: string;
   brand: string;
-  main_image: string;
+  main_image_url: string;
 }
 
 interface SubCategory {

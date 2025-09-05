@@ -79,7 +79,7 @@ const HeroBanners: React.FC = () => {
     if (banner.product_id) {
       navigate(`/products/${banner.product_id}`);
     } else if (banner.subcategory_id) {
-      navigate(`/subcategories/${banner.subcategory_id}`);
+      navigate(`/subcategories/${banner.subcategory_id}/products`);
     }
   };
 

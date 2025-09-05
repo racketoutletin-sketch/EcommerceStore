@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../redux/store";
-import { fetchProductsBySubCategory, resetProducts } from "../redux/features/products/productsListViewSlice";
+import {
+  fetchProductsBySubCategory,
+  resetProducts,
+} from "../redux/features/products/productsListViewSlice";
 import { useDebounce } from "use-debounce";
 import ProductCard from "../components/ProductCard";
 import Loader from "../components/Loader";
@@ -13,8 +16,15 @@ const ProductsBySubCategory = () => {
   const { subId } = useParams<{ subId: string }>();
   const dispatch = useDispatch<AppDispatch>();
 
-  const { searchResults, availableBrands, availableProductTypes, loading, error, page, totalPages } =
-    useSelector((state: RootState) => state.productListView);
+  const {
+    searchResults,
+    availableBrands,
+    availableProductTypes,
+    loading,
+    error,
+    page,
+    totalPages,
+  } = useSelector((state: RootState) => state.productListView);
 
   const [filters, setFilters] = useState({
     sort: "",
@@ -120,7 +130,9 @@ const ProductsBySubCategory = () => {
             <input
               type="number"
               value={filters.priceMin}
-              onChange={(e) => handleFilterChange("priceMin", Number(e.target.value))}
+              onChange={(e) =>
+                handleFilterChange("priceMin", Number(e.target.value))
+              }
               className="border p-2 w-20 rounded"
               placeholder="Min"
             />
@@ -128,7 +140,9 @@ const ProductsBySubCategory = () => {
             <input
               type="number"
               value={filters.priceMax}
-              onChange={(e) => handleFilterChange("priceMax", Number(e.target.value))}
+              onChange={(e) =>
+                handleFilterChange("priceMax", Number(e.target.value))
+              }
               className="border p-2 w-20 rounded"
               placeholder="Max"
             />
@@ -156,16 +170,21 @@ const ProductsBySubCategory = () => {
         </div>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
           {searchResults.map((product: any) => (
-            <div key={product.id} className="w-full min-w-0 h-[25rem] rounded-2xl overflow-hidden">
+            <div key={product.id} className="w-full min-w-0">
               <ProductCard
                 id={product.id}
                 name={product.name ?? ""}
                 description={product.description ?? ""}
-                main_image={product.main_image_url ?? ""}
-                price={product.price ? Number(product.price) : 0}
-                discounted_price={product.discounted_price ? Number(product.discounted_price) : undefined}
+                main_image_url={product.main_image_url}
+                images={product.images}
+                price={Number(product.price)}
+                discounted_price={
+                  product.discounted_price
+                    ? Number(product.discounted_price)
+                    : undefined
+                }
                 brand={product.brand ?? ""}
               />
             </div>
@@ -189,7 +208,7 @@ const ProductsBySubCategory = () => {
                 key={pg}
                 onClick={() => handlePageChange(pg)}
                 className={`px-3 py-1 rounded ${
-                  pg === page ? " text-black" : "bg-gray-200"
+                  pg === page ? "bg-black text-white" : "bg-gray-200"
                 }`}
               >
                 {pg}

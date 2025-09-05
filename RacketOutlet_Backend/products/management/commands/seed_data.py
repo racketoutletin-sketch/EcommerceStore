@@ -1,4 +1,9 @@
+import os
+import asyncio
+import aiohttp
 import random
+import tempfile
+from pathlib import Path
 from django.core.management.base import BaseCommand
 from django.core.files.base import ContentFile
 from faker import Faker
@@ -20,62 +25,160 @@ CATEGORY_DATA = {
 
 BRANDS = ["Yonex", "Adidas", "Nike", "Puma", "Reebok", "Li-Ning", "Wilson", "Head", "PowerPlay"]
 
+# Temp dir for downloaded images
+TEMP_DIR = tempfile.TemporaryDirectory()
+PLACEHOLDER_IMAGE = Path(__file__).parent / "placeholder.jpg"  # ensure this exists
+
+
+def safe_str(s: str, max_length: int = 100):
+    return s[:max_length] if s else ""
+
+
+async def download_image(session: aiohttp.ClientSession, seed: str, width=800, height=600, retries=3) -> Path:
+    url = f"https://picsum.photos/seed/{seed}/{width}/{height}"
+    local_path = Path(TEMP_DIR.name) / f"{seed}.jpg"
+
+    for attempt in range(1, retries + 1):
+        try:
+            async with session.get(url) as resp:
+                if resp.status == 200:
+                    content = await resp.read()
+                    with open(local_path, "wb") as f:
+                        f.write(content)
+                    return local_path
+                else:
+                    print(f"⚠️ Attempt {attempt} failed for {url} (status {resp.status})")
+        except Exception as e:
+            print(f"⚠️ Attempt {attempt} error for {url}: {e}")
+
+        await asyncio.sleep(1)
+
+    print(f"⚠️ Using fallback placeholder for {seed}")
+    return PLACEHOLDER_IMAGE
+
+
 class Command(BaseCommand):
-    help = "Seed realistic sports store database with categories, subcategories, products, images, and inventory"
+    help = "Seed sports store with categories, subcategories, products, inventory, and images"
 
     def handle(self, *args, **kwargs):
-        # Clear existing data
+        self.stdout.write("⚡ Starting seeding process...")
+
+        # Clear old data
         ProductImage.objects.all().delete()
         Product.objects.all().delete()
         SubCategory.objects.all().delete()
         Category.objects.all().delete()
+        self.stdout.write("✅ Cleared old data.")
 
+        # Run async image downloads first
+        asyncio.run(self.download_all_images())
+
+        # ORM operations
+        self.create_categories_and_products()
+
+        # Cleanup
+        TEMP_DIR.cleanup()
+        self.stdout.write(self.style.SUCCESS("🎉 Seeding completed successfully!"))
+
+    async def download_all_images(self):
+        self.download_tasks = []
+        self.image_paths = {}  # {name: Path}
+
+        async with aiohttp.ClientSession() as session:
+            for cat_name, sub_list in CATEGORY_DATA.items():
+                self.download_tasks.append(
+                    asyncio.create_task(self._download_and_store(session, cat_name))
+                )
+
+                for sub_name in sub_list:
+                    subcat_name = f"{cat_name} {sub_name}"
+                    self.download_tasks.append(
+                        asyncio.create_task(self._download_and_store(session, subcat_name))
+                    )
+
+                    for k in range(1, 11):
+                        prod_name = f"{subcat_name} {k}"
+                        self.download_tasks.append(
+                            asyncio.create_task(self._download_and_store(session, prod_name))
+                        )
+                        for img_num in range(1, 5):
+                            extra_img_name = f"{prod_name}-extra-{img_num}"
+                            self.download_tasks.append(
+                                asyncio.create_task(self._download_and_store(session, extra_img_name))
+                            )
+
+            await asyncio.gather(*self.download_tasks)
+
+    async def _download_and_store(self, session, name):
+        path = await download_image(session, name.replace(" ", "_"))
+        if path:
+            self.image_paths[name] = path
+
+    def create_categories_and_products(self):
         for cat_name, sub_list in CATEGORY_DATA.items():
-            category = Category.objects.create(
-                name=cat_name,
-                description=f"{cat_name} products",
+            # Category
+            category = Category(
+                name=safe_str(cat_name, 100),
+                description=safe_str(f"{cat_name} products", 200),
                 is_active=True,
                 is_featured=random.choice([True, False])
             )
-            self.stdout.write(f"Created Category: {category.name}")
+            if cat_name in self.image_paths:
+                with open(self.image_paths[cat_name], "rb") as f:
+                    category.image.save(
+                        f"{safe_str(cat_name,50)}.jpg",
+                        ContentFile(f.read(), name=f"{safe_str(cat_name,50)}.jpg")
+                    )
+            category.save()
+            self.stdout.write(f"✅ Created Category: {category.name}")
 
+            # Subcategories
             for sub_name in sub_list:
-                subcat = SubCategory.objects.create(
-                    name=f"{cat_name} {sub_name}",
+                subcat_name = f"{cat_name} {sub_name}"
+                subcat = SubCategory(
+                    name=safe_str(sub_name, 100),
                     parent_category=category,
-                    description=f"{sub_name} for {cat_name}",
+                    description=safe_str(f"{sub_name} for {cat_name}", 200),
                     is_active=True,
                     is_featured=random.choice([True, False])
                 )
-                self.stdout.write(f"  Created SubCategory: {subcat.name}")
+                if subcat_name in self.image_paths:
+                    with open(self.image_paths[subcat_name], "rb") as f:
+                        subcat.image.save(
+                            f"{safe_str(subcat_name,50)}.jpg",
+                            ContentFile(f.read(), name=f"{safe_str(subcat_name,50)}.jpg")
+                        )
+                subcat.save()
+                self.stdout.write(f"  📂 Created SubCategory: {subcat.name}")
 
-                # Create 10 products per subcategory
+                # Products
                 for k in range(1, 11):
-                    prod_name = f"{subcat.name} {k}"
+                    prod_name = f"{subcat_name} {k}"
                     brand = random.choice(BRANDS)
-
                     price = random.randint(50, 500)
-                    discounted_price = None
+                    discounted_price = price - random.randint(5, int(price * 0.3)) if random.choice([True, False]) else None
 
-                    # ~50% chance to apply discount
-                    if random.choice([True, False]):
-                        discount = random.randint(5, int(price * 0.3))  # discount max 30% of price
-                        discounted_price = price - discount
-
-                    product = Product.objects.create(
-                        name=prod_name,
-                        description=f"High-quality {prod_name} by {brand}",
+                    product = Product(
+                        name=safe_str(prod_name, 100),
+                        description=safe_str(f"High-quality {prod_name} by {brand}", 200),
                         subcategory=subcat,
                         price=price,
                         discounted_price=discounted_price,
-                        sku=f"{cat_name[:3]}-{sub_name[:3]}-{k}",
-                        brand=brand,
+                        sku=safe_str(f"{cat_name[:3]}-{sub_name[:3]}-{k}", 50),
+                        brand=safe_str(brand, 50),
                         weight=random.randint(1, 10),
-                        dimensions=f"{random.randint(5,50)}x{random.randint(5,50)}x{random.randint(5,50)} cm",
-                        material=fake.word(),
+                        dimensions=safe_str(f"{random.randint(5,50)}x{random.randint(5,50)}x{random.randint(5,50)} cm", 50),
+                        material=safe_str(fake.word(), 50),
                         is_active=True,
                         is_featured=random.choice([True, False])
                     )
+                    if prod_name in self.image_paths:
+                        with open(self.image_paths[prod_name], "rb") as f:
+                            product.main_image.save(
+                                f"{safe_str(prod_name,50)}.jpg",
+                                ContentFile(f.read(), name=f"{safe_str(prod_name,50)}.jpg")
+                            )
+                    product.save()
 
                     # Inventory
                     Inventory.objects.create(
@@ -84,21 +187,16 @@ class Command(BaseCommand):
                         low_stock_threshold=10
                     )
 
-                    # Main Image
-                    main_image_content = ContentFile(fake.image_url().encode(), name=f"{prod_name}-main.jpg")
-                    product.main_image.save(f"{prod_name}-main.jpg", main_image_content)
-                    product.save()
+                    # Extra images
+                    for img_num in range(1, 5):
+                        extra_img_name = f"{prod_name}-extra-{img_num}"
+                        if extra_img_name in self.image_paths:
+                            with open(self.image_paths[extra_img_name], "rb") as f:
+                                ProductImage.objects.create(
+                                    product=product,
+                                    image=ContentFile(f.read(), name=f"{safe_str(extra_img_name,50)}.jpg"),
+                                    alt_text=safe_str(f"{prod_name} image {img_num}", 100),
+                                    is_primary=False
+                                )
 
-                    # 2-3 Product Images
-                    for img_num in range(1, random.randint(3, 4)):
-                        img_content = ContentFile(fake.image_url().encode(), name=f"{prod_name}-{img_num}.jpg")
-                        ProductImage.objects.create(
-                            product=product,
-                            image=img_content,
-                            alt_text=f"{prod_name} image {img_num}",
-                            is_primary=(img_num == 1)
-                        )
-
-                    self.stdout.write(f"    Created Product: {product.name} with images")
-
-        self.stdout.write(self.style.SUCCESS("✅ Realistic sports store seeding completed!"))
+                    self.stdout.write(f"    🛒 Created Product: {product.name} with extra images")

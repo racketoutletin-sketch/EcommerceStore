@@ -152,7 +152,7 @@ if (isLoading && !subcategories.length) {
                         id={p.id}
                         name={p.name}
                         description={p.description}
-                        main_image={p.main_image}
+                        main_image_url={p.main_image_url}
                         price={Number(p.price)}
                         discounted_price={
                           p.discounted_price ? Number(p.discounted_price) : undefined

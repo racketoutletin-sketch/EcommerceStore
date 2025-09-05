@@ -79,7 +79,7 @@ const HomepageSubcategories: React.FC = () => {
           <div
             key={cat.id}
             className="border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition p-4"
-            onClick={() => navigate(`/subcategories/${cat.id}`)}
+            onClick={() => navigate(`/subcategories/${cat.id}/products`)}
           >
             <img
               src={cat.image || "/default.png"}
