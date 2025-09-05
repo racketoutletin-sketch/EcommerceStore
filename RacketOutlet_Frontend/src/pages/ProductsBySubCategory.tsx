@@ -4,18 +4,17 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../redux/store";
-import { fetchProductsBySubCategory } from "../redux/features/products/productsListViewSlice";
+import { fetchProductsBySubCategory, resetProducts } from "../redux/features/products/productsListViewSlice";
 import { useDebounce } from "use-debounce";
 import ProductCard from "../components/ProductCard";
-import Loader from "../components/Loader"; 
+import Loader from "../components/Loader";
 
 const ProductsBySubCategory = () => {
   const { subId } = useParams<{ subId: string }>();
   const dispatch = useDispatch<AppDispatch>();
 
-  const { searchResults, availableBrands, availableProductTypes, loading, error } =
+  const { searchResults, availableBrands, availableProductTypes, loading, error, page, totalPages } =
     useSelector((state: RootState) => state.productListView);
-    console.log(searchResults)
 
   const [filters, setFilters] = useState({
     sort: "",
@@ -30,10 +29,12 @@ const ProductsBySubCategory = () => {
 
   useEffect(() => {
     if (subId) {
+      dispatch(resetProducts());
       dispatch(
         fetchProductsBySubCategory({
           subId: Number(subId),
           ...debouncedFilters,
+          page: 1,
         })
       );
     }
@@ -43,7 +44,19 @@ const ProductsBySubCategory = () => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
-  if (loading) return  <Loader />;
+  const handlePageChange = (newPage: number) => {
+    if (subId && newPage >= 1 && newPage <= totalPages) {
+      dispatch(
+        fetchProductsBySubCategory({
+          subId: Number(subId),
+          ...debouncedFilters,
+          page: newPage,
+        })
+      );
+    }
+  };
+
+  if (loading && page === 1) return <Loader />;
   if (error) return <p className="text-red-500 text-center mt-6">{error}</p>;
   if (!searchResults.length)
     return <p className="text-gray-500 text-center mt-6">No products found</p>;
@@ -144,21 +157,53 @@ const ProductsBySubCategory = () => {
 
         {/* Products Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {searchResults.map((product: any) => {
+          {searchResults.map((product: any) => (
+            <div key={product.id} className="w-full min-w-0 h-[25rem] rounded-2xl overflow-hidden">
+              <ProductCard
+                id={product.id}
+                name={product.name ?? ""}
+                description={product.description ?? ""}
+                main_image={product.main_image_url ?? ""}
+                price={product.price ? Number(product.price) : 0}
+                discounted_price={product.discounted_price ? Number(product.discounted_price) : undefined}
+                brand={product.brand ?? ""}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Pagination Controls */}
+        <div className="flex justify-center mt-6 space-x-2">
+          <button
+            onClick={() => handlePageChange(page - 1)}
+            disabled={page === 1}
+            className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+          >
+            Prev
+          </button>
+
+          {[...Array(totalPages)].map((_, idx) => {
+            const pg = idx + 1;
             return (
-              <div key={product.id} className="w-full min-w-0 h-[25rem] rounded-2xl overflow-hidden">
-                <ProductCard
-                  id={product.id}
-                  name={product.name ?? ""}
-                  description={product.description ?? ""}
-                  main_image={product.main_image_url ?? ""}
-                  price={product.price ? Number(product.price) : 0}
-                  discounted_price={product.discounted_price ? Number(product.discounted_price) : undefined}
-                  brand={product.brand ?? ""}
-                />
-              </div>
+              <button
+                key={pg}
+                onClick={() => handlePageChange(pg)}
+                className={`px-3 py-1 rounded ${
+                  pg === page ? " text-black" : "bg-gray-200"
+                }`}
+              >
+                {pg}
+              </button>
             );
           })}
+
+          <button
+            onClick={() => handlePageChange(page + 1)}
+            disabled={page === totalPages}
+            className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+          >
+            Next
+          </button>
         </div>
       </div>
     </div>

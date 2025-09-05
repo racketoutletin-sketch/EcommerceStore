@@ -22,6 +22,8 @@ interface ProductListState {
   availableProductTypes: string[];
   loading: boolean;
   error: string | null;
+  page: number;        // current page
+  totalPages: number;  // total number of pages
 }
 
 const initialState: ProductListState = {
@@ -30,6 +32,8 @@ const initialState: ProductListState = {
   availableProductTypes: [],
   loading: false,
   error: null,
+  page: 1,
+  totalPages: 1,
 };
 
 // Type guard
@@ -48,7 +52,7 @@ export const fetchProductsBySubCategory = createAsyncThunk(
       priceMax?: number;
       inStock?: boolean;
       limit?: number;
-      offset?: number;
+      page?: number;
     },
     { rejectWithValue }
   ) => {
@@ -66,10 +70,14 @@ export const fetchProductsBySubCategory = createAsyncThunk(
         queryObj.price_max = params.priceMax.toString();
       if (params.inStock !== undefined)
         queryObj.in_stock = params.inStock.toString();
-      if (params.limit !== undefined)
-        queryObj.limit = params.limit.toString();
-      if (params.offset !== undefined)
-        queryObj.offset = params.offset.toString();
+
+      // pagination defaults
+      const limit = params.limit ?? 16;
+      const page = params.page ?? 1;
+      const offset = (page - 1) * limit;
+
+      queryObj.limit = limit.toString();
+      queryObj.offset = offset.toString();
 
       const query = new URLSearchParams(queryObj).toString();
       const response = await api.get(
@@ -77,6 +85,8 @@ export const fetchProductsBySubCategory = createAsyncThunk(
       );
 
       const products: Product[] = response.data.results ?? [];
+      const total: number = response.data.total ?? products.length;
+      const totalPages = Math.ceil(total / limit);
 
       const brands: string[] = Array.from(
         new Set(products.map((p) => p.brand).filter(isString))
@@ -86,7 +96,13 @@ export const fetchProductsBySubCategory = createAsyncThunk(
         new Set(products.map((p) => p.extra_attributes?.type).filter(isString))
       );
 
-      return { products, brands, productTypes };
+      return {
+        products,
+        brands,
+        productTypes,
+        page,
+        totalPages,
+      };
     } catch (err: any) {
       return rejectWithValue(
         err.response?.data?.detail || err.message || "Failed to fetch products"
@@ -98,21 +114,26 @@ export const fetchProductsBySubCategory = createAsyncThunk(
 const productListReducer = createSlice({
   name: "productListView",
   initialState,
-  reducers: {},
+  reducers: {
+    resetProducts(state) {
+      state.searchResults = [];
+      state.page = 1;
+      state.totalPages = 1;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchProductsBySubCategory.pending, (state) => {
         state.loading = true;
         state.error = null;
-        state.searchResults = [];
-        state.availableBrands = [];
-        state.availableProductTypes = [];
       })
       .addCase(fetchProductsBySubCategory.fulfilled, (state, action) => {
         state.loading = false;
         state.searchResults = action.payload.products;
         state.availableBrands = action.payload.brands;
         state.availableProductTypes = action.payload.productTypes;
+        state.page = action.payload.page;
+        state.totalPages = action.payload.totalPages;
       })
       .addCase(fetchProductsBySubCategory.rejected, (state, action) => {
         state.loading = false;
@@ -121,4 +142,5 @@ const productListReducer = createSlice({
   },
 });
 
+export const { resetProducts } = productListReducer.actions;
 export default productListReducer.reducer;

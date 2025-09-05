@@ -22,7 +22,6 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({
   id,
   name,
-  description,
   main_image,
   price,
   discounted_price,
@@ -114,7 +113,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
       <div className="p-4 space-y-2">
         <h2 className="text-lg font-bold text-gray-800">{name}</h2>
         {brand && <p className="text-sm text-gray-500">{brand}</p>}
-        <p className="text-gray-600 text-sm line-clamp-2">{description}</p>
 
         <div className="mt-2 flex items-center space-x-2">
           {discounted_price ? (
