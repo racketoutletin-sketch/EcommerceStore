@@ -176,10 +176,10 @@ const FeaturedProduct: React.FC = () => {
 
           <div className="flex items-center mb-4">
             <span className="text-red-500 font-bold text-xl mr-2">
-              ${product.product.discounted_price || product.product.price}
+              ₹{product.product.discounted_price || product.product.price}
             </span>
             {product.product.discounted_price && (
-              <span className="text-gray-400 line-through">${product.product.price}</span>
+              <span className="text-gray-400 line-through">₹{product.product.price}</span>
             )}
           </div>
 

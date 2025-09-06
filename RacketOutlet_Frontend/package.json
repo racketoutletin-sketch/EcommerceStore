@@ -20,6 +20,7 @@
     "lucide": "^0.541.0",
     "lucide-react": "^0.541.0",
     "react": "^19.1.1",
+    "react-activation": "^0.13.4",
     "react-dom": "^19.1.1",
     "react-icons": "^5.5.0",
     "react-redux": "^9.2.0",
