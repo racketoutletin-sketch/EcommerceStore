@@ -1,9 +1,8 @@
-// src/components/Header.tsx
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Loader from "../Loader";
-import { useAppDispatch } from "../../redux/store"; 
+import { useAppDispatch } from "../../redux/store";
 import { logout } from "../../redux/features/auth/authSlice";
 import {
   faUser,
@@ -34,19 +33,23 @@ const Header: React.FC = () => {
 
   const accessToken = localStorage.getItem("access_token");
 
-  // Fetch categories with cache version
+  // Fetch categories with cache busting
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         setLoading(true);
         const res = await fetch(
-          "https://wzonllfccvmvoftahudd.supabase.co/functions/v1/get-featured-categories"
+          `https://wzonllfccvmvoftahudd.supabase.co/functions/v1/get-featured-categories?v=${cacheVersion}`
         );
         if (!res.ok) throw new Error("Failed to fetch categories");
 
         const data = await res.json();
         setCategories(data.featured_categories || []);
-        if (data.version) setCacheVersion(data.version); // update cache version
+
+        // Update version if backend sends one
+        if (data.version && data.version !== cacheVersion) {
+          setCacheVersion(data.version);
+        }
       } catch (err) {
         console.error(err);
         setCategories([]);
@@ -56,7 +59,7 @@ const Header: React.FC = () => {
     };
 
     fetchCategories();
-  }, []);
+  }, [cacheVersion]); // refetch when version changes
 
   // Close dropdown on outside click
   useEffect(() => {
