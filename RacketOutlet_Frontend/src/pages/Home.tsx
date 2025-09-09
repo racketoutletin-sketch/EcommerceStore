@@ -16,57 +16,39 @@ import InfoCards from "../components/HomePage/InfoCards";
 import Footer from "../components/HomePage/Footer";
 import useInitAuth from "../hooks/useInitAuth";
 import usePreloadSubCategories from "../hooks/usePreloadSubCategories";
-import Loader from "../components/Loader";
+// import Loader from "../components/Loader";
+
 
 const Home = () => {
   useInitAuth();
-
-  const loadingSubCategories = usePreloadSubCategories();
+  usePreloadSubCategories();
 
   return (
     <div className="min-h-screen flex flex-col bg-white font-poppins">
       <TopBar />
       <Header />
-
       <main className="flex-grow max-w-[1840px] w-full mx-auto px-2 py-4">
-
-
-        {/* Hero Section */}
         <HeroBanners />
-
-        {/* Movement / Category Sections */}
         <MovementSection />
         <CategoryIcons />
-
-        {/* Video Section */}
         <VideoCard />
-
-        {/* Featured Products & Highlights */}
         <FeaturedProduct />
         <CraftedforChampions />
         <TrustIndicators />
         <AthletesImage />
         <ShopTheLook />
-
-        {/* Testimonials & Collections */}
         <Testimonial />
         <FeaturedCollections />
-
-        {/* About & Info */}
         <div id="about">
           <AboutRacketOutlet />
         </div>
         <InfoCards />
       </main>
-
       <Footer />
-
-      {/* Full-screen Loader overlay */}
-      {loadingSubCategories && (
-          <Loader />
-      )}
     </div>
   );
 };
+
+
 
 export default Home;

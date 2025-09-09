@@ -169,41 +169,55 @@ const FeaturedProduct: React.FC = () => {
       </div>
 
       {/* Right: Product Details */}
-      <div className="flex flex-col justify-between">
-        <div>
-          <span className="text-sm text-gray-500">{product.product.brand}</span>
-          <h2 className="text-2xl font-bold my-2 text-black">{product.product.name}</h2>
+<div className="flex flex-col justify-between">
+  {/* Product info clickable div */}
+  <div
+    className="cursor-pointer"
+    onClick={() => product.product && navigate(`/products/${product.product.id}`)}
+  >
+    <span className="text-sm text-gray-500">{product.product.brand}</span>
+    <h2 className="text-2xl font-bold my-2 text-black">{product.product.name}</h2>
 
-          <div className="flex items-center mb-4">
-            <span className="text-red-500 font-bold text-xl mr-2">
-              ₹{product.product.discounted_price || product.product.price}
-            </span>
-            {product.product.discounted_price && (
-              <span className="text-gray-400 line-through">₹{product.product.price}</span>
-            )}
-          </div>
+    <div className="flex items-center mb-4">
+      <span className="text-red-500 font-bold text-xl mr-2">
+        ₹{product.product.discounted_price || product.product.price}
+      </span>
+      {product.product.discounted_price && (
+        <span className="text-gray-400 line-through">₹{product.product.price}</span>
+      )}
+    </div>
 
-          <span className="text-sm text-gray-500">{product.product.description}</span>
-        </div>
+    <span className="text-sm text-gray-500">{product.product.description}</span>
+  </div>
 
-        {/* Buttons */}
-        <div className="flex space-x-4 mt-4">
-          <button
-            onClick={(e) => handleAddToCart(1, e)}
-            disabled={loadingCart}
-            className={`flex-1 py-3 rounded-md transition text-white ${loadingCart ? "bg-gray-500 cursor-not-allowed" : "bg-black hover:bg-gray-800"}`}
-          >
-            {loadingCart ? "Adding..." : "Add to Cart"}
-          </button>
+  {/* Buttons */}
+  <div className="flex space-x-4 mt-4">
+    {cartItem ? (
+      <button
+        onClick={(e) => { e.stopPropagation(); navigate("/cart"); }}
+        className="flex-1 py-3 rounded-md bg-black text-white hover:bg-white hover:text-black hover:border transition"
+      >
+        Go to Cart
+      </button>
+    ) : (
+      <button
+        onClick={(e) => { e.stopPropagation(); handleAddToCart(1, e); }}
+        disabled={loadingCart}
+        className={`flex-1 py-3 rounded-md transition text-white ${loadingCart ? "bg-gray-500 cursor-not-allowed" : "bg-black hover:bg-gray-800"}`}
+      >
+        {loadingCart ? "Adding..." : "Add to Cart"}
+      </button>
+    )}
 
-          <button
-            onClick={handleBuyNow}
-            className="flex-1 border border-gray-300 text-black py-3 rounded-md hover:bg-gray-100 transition"
-          >
-            Buy Now
-          </button>
-        </div>
-      </div>
+    <button
+      onClick={(e) => { e.stopPropagation(); handleBuyNow(); }}
+      className="flex-1 border border-gray-300 text-black py-3 rounded-md hover:bg-gray-100 transition"
+    >
+      Buy Now
+    </button>
+  </div>
+</div>
+
     </div>
   );
 };

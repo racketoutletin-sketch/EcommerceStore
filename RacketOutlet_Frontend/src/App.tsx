@@ -1,5 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { AliveScope, KeepAlive } from "react-activation";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -23,142 +22,50 @@ import ChangePassword from "./pages/ChangePassword";
 
 import "./App.css";
 
+function AppRoutes() {
+  const location = useLocation();
+
+  return (
+    <>
+      {/* ✅ Keep Home always mounted, only show when path is "/" */}
+      <div style={{ display: location.pathname === "/" ? "block" : "none" }}>
+        <Home />
+      </div>
+
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+        <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+        <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
+        <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
+
+        {/* Protected Routes */}
+        <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/profile/update" element={<ProtectedRoute><ProfileUpdate /></ProtectedRoute>} />
+        <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
+        <Route path="/wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
+        <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
+        <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
+        <Route path="/orders/:id" element={<ProtectedRoute><OrderDetailPage /></ProtectedRoute>} />
+
+        {/* Dynamic Routes */}
+        <Route path="/subcategories/:id" element={<SubCatWithProducts />} />
+        <Route path="/subcategories/:subId/products" element={<ProductsBySubCategory />} />
+        <Route path="/products/:productId" element={<ProductDetail />} />
+        <Route path="/search" element={<SearchResults />} />
+
+        {/* Fallback → go back to Home */}
+        <Route path="*" element={<Home />} />
+      </Routes>
+    </>
+  );
+}
+
 export default function App() {
   return (
     <Router>
-      <AliveScope>
-        <Routes>
-          {/* ✅ Cached Home inside PublicRoute */}
-          <Route
-            path="/"
-            element={
-              <PublicRoute>
-                <KeepAlive name="HomePage" when={true}>
-                  <Home />
-                </KeepAlive>
-              </PublicRoute>
-            }
-          />
-
-          <Route
-            path="/login"
-            element={
-              <PublicRoute>
-                <Login />
-              </PublicRoute>
-            }
-          />
-          <Route
-            path="/register"
-            element={
-              <PublicRoute>
-                <Register />
-              </PublicRoute>
-            }
-          />
-          <Route
-            path="/forgot-password"
-            element={
-              <PublicRoute>
-                <ForgotPassword />
-              </PublicRoute>
-            }
-          />
-          <Route
-            path="/reset-password"
-            element={
-              <PublicRoute>
-                <ResetPassword />
-              </PublicRoute>
-            }
-          />
-          <Route
-            path="/change-password"
-            element={
-              <ProtectedRoute>
-                <ChangePassword />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile/update"
-            element={
-              <ProtectedRoute>
-                <ProfileUpdate />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route path="/subcategories/:id" element={<SubCatWithProducts />} />
-          <Route
-            path="/subcategories/:subId/products"
-            element={<ProductsBySubCategory />}
-          />
-          <Route path="/products/:productId" element={<ProductDetail />} />
-          <Route path="/search" element={<SearchResults />} />
-
-          <Route
-            path="/cart"
-            element={
-              <ProtectedRoute>
-                <CartPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/wishlist"
-            element={
-              <ProtectedRoute>
-                <WishlistPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/checkout"
-            element={
-              <ProtectedRoute>
-                <CheckoutPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/orders"
-            element={
-              <ProtectedRoute>
-                <OrdersPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/orders/:id"
-            element={
-              <ProtectedRoute>
-                <OrderDetailPage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* ✅ Fallback to cached Home */}
-          <Route
-            path="*"
-            element={
-              <PublicRoute>
-                <KeepAlive name="HomePage" when={true}>
-                  <Home />
-                </KeepAlive>
-              </PublicRoute>
-            }
-          />
-        </Routes>
-      </AliveScope>
+      <AppRoutes />
     </Router>
   );
 }

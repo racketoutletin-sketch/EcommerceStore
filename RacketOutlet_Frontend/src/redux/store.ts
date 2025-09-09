@@ -14,8 +14,8 @@ import cartReducer from "./features/cart/cartSlice";
 import ordersReducer  from "./features/orders/ordersSlice";
 import orderDetailSlice  from "./features/orders/orderDetailSlice";
 
-
 import wishlistSlice from "./features/wishlist/wishlistSlice";
+import preloadReducer from "./features/preload/preloadSlice"; // ✅ import preload slice
 
 import { useDispatch, useSelector } from "react-redux";
 import type { TypedUseSelectorHook } from "react-redux";
@@ -29,12 +29,13 @@ export const store = configureStore({
     categories: categoriesReducer,
     productView: productViewReducer,
     productListView: productListReducer,
-    recentlyViewed: recentlyViewedReducer, // ✅ added missing comma
-    cart: cartReducer, // ✅ registered correctly
-    wishlist:wishlistSlice,
+    recentlyViewed: recentlyViewedReducer,
+    cart: cartReducer,
+    wishlist: wishlistSlice,
     orders: ordersReducer,
-    orderDetail:orderDetailSlice,
+    orderDetail: orderDetailSlice,
     productSearch: productSearchReducer,
+    preload: preloadReducer, // ✅ register preload slice
   },
 });
 

@@ -6,7 +6,7 @@ interface Product {
   id: number;
   name: string;
   slug: string;
-  main_image: string;
+  main_image_url: string;
   current_price: number;
 }
 
@@ -27,6 +27,7 @@ interface Order {
   billing_address: string;
   payment_method: string;
   payment_status: string;
+  notes:string;
   created_at: string;
   updated_at: string;
   items: OrderItem[];

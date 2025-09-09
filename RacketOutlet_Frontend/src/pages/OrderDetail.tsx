@@ -67,8 +67,9 @@ const OrderDetailPage = () => {
       <div className="mb-4">
         <p><span className="font-semibold">Shipping Address:</span> {order.shipping_address}</p>
         <p><span className="font-semibold">Billing Address:</span> {order.billing_address}</p>
-        <p><span className="font-semibold">Created At:</span> {new Date(order.created_at).toLocaleString()}</p>
-        <p><span className="font-semibold">Updated At:</span> {new Date(order.updated_at).toLocaleString()}</p>
+        <p><span className="font-semibold">Extra Notes:</span> {order.notes}</p>
+        <p><span className="font-semibold">Ordered At:</span> {new Date(order.created_at).toLocaleString()}</p>
+
       </div>
 
       <div>
@@ -77,7 +78,7 @@ const OrderDetailPage = () => {
           {order.items.map((item) => (
             <div key={item.id} className="flex border p-2 rounded-md shadow-sm hover:shadow-md">
               <img
-                src={item.product.main_image}
+                src={item.product.main_image_url}
                 alt={item.product.name}
                 className="w-20 h-20 object-cover rounded mr-3"
               />
@@ -92,6 +93,18 @@ const OrderDetailPage = () => {
         </div>
       </div>
     </div>
+    {/* Support Info */}
+<div className="mt-10 text-center">
+  <p className="text-sm text-gray-600">
+    For any support, contact us at{" "}
+    <a
+      href="mailto:racketoutlet.in@gmail.com"
+      className="text-blue-600 hover:underline font-medium"
+    >
+      racketoutlet.in@gmail.com
+    </a>
+  </p>
+</div>
     </div>
 
   );
