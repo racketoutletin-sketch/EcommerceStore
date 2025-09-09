@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { useMemo } from "react";
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -25,14 +26,18 @@ import "./App.css";
 function AppRoutes() {
   const location = useLocation();
 
+  // Memoize Home so it keeps its state even if hidden
+  const homeElement = useMemo(() => <Home />, []);
+
   return (
     <>
-      {/* ✅ Keep Home always mounted, only show when path is "/" */}
+      {/* Always mounted Home */}
       <div style={{ display: location.pathname === "/" ? "block" : "none" }}>
-        <Home />
+        {homeElement}
       </div>
 
-      <Routes>
+      {/* Other routes */}
+      <Routes location={location}>
         {/* Public Routes */}
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
@@ -55,8 +60,8 @@ function AppRoutes() {
         <Route path="/products/:productId" element={<ProductDetail />} />
         <Route path="/search" element={<SearchResults />} />
 
-        {/* Fallback → go back to Home */}
-        <Route path="*" element={<Home />} />
+        {/* Fallback → do nothing because Home is always mounted */}
+        <Route path="*" element={<></>} />
       </Routes>
     </>
   );
