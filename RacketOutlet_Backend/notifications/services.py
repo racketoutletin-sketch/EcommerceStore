@@ -1,140 +1,128 @@
 from django.template import Template, Context
-from .models import Notification, EmailTemplate
-from common.utils import send_email
+from notifications.models import Notification
 
+SUPABASE_PUBLIC_URL = "https://wzonllfccvmvoftahudd.supabase.co/storage/v1/object/public/media/"
 
 def send_order_email(order):
-    """
-    Send order confirmation email only if payment status is 'completed' or COD.
-    Creates a Notification record.
-    """
     if not hasattr(order, 'payment') or order.payment.status.lower() not in ('completed', 'cod'):
-        print(f"[DEBUG] Payment not completed for order {order.id}. Email not sent.")
         return
 
-    # Get or create email template
-    template, _ = EmailTemplate.objects.get_or_create(
-        name='order_confirmation',
-        defaults={
-            'subject': 'Order Confirmation - RacketOutlet',
-            'html_content': """
-                <h2>Hi {{ user.username }},</h2>
-                <p>Thank you for shopping with us! Your order <b>#{{ order.id }}</b> has been confirmed.</p>
-                
-                <h3>Order Details:</h3>
-                <table border="1" cellspacing="0" cellpadding="8" style="border-collapse: collapse; width: 100%;">
-                    <thead>
-                        <tr>
-                            <th style="text-align:left;">Product</th>
-                            <th style="text-align:right;">Qty</th>
-                            <th style="text-align:right;">Price</th>
-                            <th style="text-align:right;">Subtotal</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in items %}
-                            <tr>
-                                <td>{{ item.product.name }}</td>
-                                <td style="text-align:right;">{{ item.quantity }}</td>
-                                <td style="text-align:right;">{{ item.price }}</td>
-                                <td style="text-align:right;">{{ item.subtotal }}</td>
-                            </tr>
-                        {% empty %}
-                            <tr>
-                                <td colspan="4" style="text-align:center;">No items found.</td>
-                            </tr>
-                        {% endfor %}
-                        <tr>
-                            <td colspan="3" style="text-align:right; font-weight:bold;">Total:</td>
-                            <td style="text-align:right; font-weight:bold;">{{ total_amount }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+    # Prepare items
+    items_context = []
+    for item in order.items.all():
+        product = item.product
+        price = getattr(product, "discounted_price", product.price) or 0
+        subtotal = price * item.quantity
 
-                <h3>Shipping Address</h3>
-                <p>{{ shipping_address|linebreaksbr }}</p>
+        main_image_url = getattr(product, "main_image_url", None) or (
+            f"{SUPABASE_PUBLIC_URL}{product.main_image.name}" if getattr(product, "main_image", None) else None
+        )
 
-                <h3>Contact Info</h3>
-                <p>
-                    Phone: {{ contact_phone }}<br>
-                    Email: {{ contact_email }}
-                </p>
+        items_context.append({
+            "product": product.name,
+            "quantity": item.quantity,
+            "price": product.current_price,
+            "subtotal": item.subtotal,
+            "main_image_url": main_image_url,
+        })
 
-                <h3>Billing Address</h3>
-                <p>{{ billing_address|linebreaksbr }}</p>
-
-                <h3>Payment</h3>
-                <p>
-                    Method: {{ payment_method }}<br>
-                    Status: <b>{{ payment_status }}</b>
-                </p>
-
-                <p>We’ll notify you once it ships.</p>
-            """,
-            'text_content': """
-                Hi {{ user.username }},
-                Your order #{{ order.id }} has been confirmed.
-
-                Order details:
-                {% for item in items %}
-                    - {{ item.product.name }} x {{ item.quantity }} @ {{ item.price }} = {{ item.subtotal }}
-                {% empty %}
-                    No items found.
-                {% endfor %}
-
-                Total: {{ total_amount }}
-
-                Shipping Address:
-                {{ shipping_address }}
-
-                Contact Info:
-                Phone: {{ contact_phone }}
-                Email: {{ contact_email }}
-
-                Billing Address:
-                {{ billing_address }}
-
-                Payment:
-                Method: {{ payment_method }}
-                Status: {{ payment_status }}
-
-                We’ll notify you once it ships.
-            """,
-        }
-    )
-
-    # Prepare context
     context = {
-        'order': order,
-        'user': order.user,
-        'items': order.items.all() if hasattr(order, 'items') else [],
-        'total_amount': getattr(order, 'total_amount', None),
-        'shipping_address': getattr(order, 'shipping_address', ''),
-        'billing_address': getattr(order, 'billing_address', ''),
-        'contact_phone': getattr(order.user, 'phone', ''),
-        'contact_email': order.user.email,
-        'payment_method': getattr(order.payment, 'payment_method', ''),
-        'payment_status': getattr(order.payment, 'status', ''),
+        "order": order,
+        "order_number": getattr(order, "order_number", ""),
+        "user": order.user,
+        "user_name": getattr(order.user, "username", ""),
+        "user_mobile": getattr(order.user, "phone_number", ""),
+        "user_address": getattr(order.user, "address", ""),
+        "shipping_person_name": getattr(order, "shipping_person_name", ""),
+        "shipping_person_number": getattr(order, "shipping_person_number", ""),
+        "items": items_context,
+        "total_amount": getattr(order, "total_amount", 0),
+        "shipping_address": getattr(order, "shipping_address", ""),
+        "billing_address": getattr(order, "billing_address", ""),
+        "payment_method": getattr(order.payment, "payment_method", ""),
+        "payment_status": getattr(order.payment, "status", ""),
+        "notes": getattr(order, "notes", ""),
+        "created_at": getattr(order, "created_at", ""),
     }
 
-    # Render email content
-    html_content = Template(template.html_content).render(Context(context))
-    text_content = Template(template.text_content).render(Context(context)) if template.text_content else None
+    html_template = """
+    <html>
+    <body style="font-family: Arial, sans-serif; max-width:700px; margin:auto; color:#333;">
+        <div style="border:1px solid #e0e0e0; padding:20px; background-color:#fafafa;">
+            <div style="text-align:center; margin-bottom:20px;">
+                <img src="https://i.postimg.cc/FH8zS8JF/logo.jpg" alt="RacketOutlet" style="width:150px;">
+            </div>
 
-    # Send email
-    send_email(
-        to_email=order.user.email,
-        subject=template.subject,
-        message=text_content or html_content,
-        html_message=html_content
-    )
+            <h2>Hi {{ user_name }},</h2>
+            <p>Thank you for shopping with us! Your order <b>#{{ order_number }}</b> has been confirmed.</p>
+            <p>Mobile: {{ user_mobile }}<br>Address: {{ user_address|linebreaksbr }}</p>
 
-    # Create notification
+            <h3>Shipping Details</h3>
+            <p>
+                Name: {{ shipping_person_name }}<br>
+                Mobile: {{ shipping_person_number }}<br>
+                Address: {{ shipping_address|linebreaksbr }}
+            </p>
+
+            <h3>Billing Address</h3>
+            <p>{{ billing_address|linebreaksbr }}</p>
+
+            <h3>Order Items</h3>
+            <table style="width:100%; border-collapse: collapse; border:1px solid #ccc;">
+                <thead>
+                    <tr style="background-color:#1a73e8; color:white;">
+                        <th style="padding:12px; text-align:left;">Product</th>
+                        <th style="padding:12px; text-align:right;">Qty</th>
+                        <th style="padding:12px; text-align:right;">Price</th>
+                        <th style="padding:12px; text-align:right;">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td style="padding:12px; border:1px solid #ccc;">
+                            {% if item.main_image_url %}
+                                <img src="{{ item.main_image_url }}" style="width:50px; height:auto; vertical-align:middle; margin-right:5px;">
+                            {% endif %}
+                            <b>{{ item.product }}</b>
+                        </td>
+                        <td style="text-align:right; padding:12px;">{{ item.quantity }}</td>
+                        <td style="text-align:right; padding:12px;">₹{{ item.price }}</td>
+                        <td style="text-align:right; padding:12px;">₹{{ item.subtotal }}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr style="font-weight:bold; background-color:#f2f2f2;">
+                        <td colspan="3" style="text-align:right; padding:12px;">Total:</td>
+                        <td style="text-align:right; padding:12px;">₹{{ total_amount }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Payment Details</h3>
+            <p>Method: {{ payment_method }}<br>Status: {{ payment_status }}</p>
+
+            {% if notes %}
+            <h3>Additional Notes</h3>
+            <p>{{ notes|linebreaksbr }}</p>
+            {% endif %}
+
+            <p style="font-size:12px; color:#777; margin-top:20px;">Order created at: {{ created_at }}</p>
+        </div>
+    </body>
+    </html>
+    """
+
+    html_content = Template(html_template).render(Context(context))
+
+    from common.utils import send_email
+    send_email(order.user.email, f"Order Confirmation - #{order.order_number}", html_content)
+
     Notification.objects.create(
         user=order.user,
-        type='email',
-        subject=template.subject,
-        message=text_content or html_content,
-        status='sent'
+        type="email",
+        subject=f"Order Confirmation - #{order.order_number}",
+        message=html_content,
+        status="sent"
     )
-    print(f"[DEBUG] Order confirmation email sent for order {order.id}")
+
+    print(f"[DEBUG] HTML-only email sent for order {order.order_number}")

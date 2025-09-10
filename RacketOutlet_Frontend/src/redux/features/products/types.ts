@@ -26,7 +26,7 @@ export interface Product {
   weight: string;
   dimensions: string;
   material: string;
-  main_image: string;
+  main_image_url: string;
   extra_attributes?: any;
   is_featured: boolean;
   is_deal_of_the_day: boolean;
@@ -35,6 +35,7 @@ export interface Product {
   images: ProductImage[];
   inventory: Inventory;
   sub_category_id: number;
+  sub_category_name: string;
 }
 
 export interface ProductsState {

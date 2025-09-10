@@ -1,7 +1,6 @@
-# notifications/signals.py
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from orders.models import Payment  # your Payment model
+from orders.models import Payment
 from notifications.models import Notification
 from notifications.services import send_order_email
 
@@ -9,9 +8,9 @@ from notifications.services import send_order_email
 def send_order_email_on_payment(sender, instance, created, **kwargs):
     """
     Sends order confirmation email after payment is completed.
-    Ensures email is sent only once.
+    Ensures email is sent only once per order.
     """
-    # Only act if payment status is 'completed' or 'cod'
+    # Only send for completed or COD payments
     if instance.status.lower() not in ('completed', 'cod'):
         return
 
@@ -19,15 +18,16 @@ def send_order_email_on_payment(sender, instance, created, **kwargs):
     if not order:
         return
 
-    # Check if a notification already exists for this order
-    existing = Notification.objects.filter(
+    # Use a dedicated notification type and reference to avoid duplicates
+    notification_exists = Notification.objects.filter(
         user=order.user,
-        subject__icontains=f"Order {order.id}",
-        type='email'
+        type='email',
+        subject__icontains=f"Order Confirmation - #{order.id}"
     ).exists()
-    if existing:
+
+    if notification_exists:
         print(f"[DEBUG] Email already sent for order {order.id}")
         return
 
-    # Send email
+    # Send the order email
     send_order_email(order)

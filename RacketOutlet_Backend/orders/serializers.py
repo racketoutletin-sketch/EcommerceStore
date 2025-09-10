@@ -172,6 +172,8 @@ class OrderSerializer(serializers.ModelSerializer):
             "total_amount",
             "shipping_address",
             "billing_address",
+            "shipping_person_name",   # <-- add this
+            "shipping_person_number", # <-- add this
             "payment_method",
             "payment_status",
             "notes",
@@ -180,6 +182,7 @@ class OrderSerializer(serializers.ModelSerializer):
             "items",
         ]
         read_only_fields = ("order_number", "total_amount", "payment_status")
+
 
     def get_user(self, obj):
         return {

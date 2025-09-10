@@ -18,4 +18,5 @@ urlpatterns = [
 
     # Product search
     path('products/', ProductSearchListView.as_view(), name='product-search-list'),
+    path("brands/", BrandListView.as_view(), name="brand-list"),  # ✅ new endpoint
 ]

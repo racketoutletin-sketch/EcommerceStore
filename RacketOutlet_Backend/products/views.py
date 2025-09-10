@@ -2,6 +2,8 @@ from rest_framework import generics, filters
 from rest_framework.permissions import AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Case, When, F, DecimalField
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .models import Category, SubCategory, Product
 from .serializers import (
@@ -178,3 +180,18 @@ class ProductSearchListView(generics.ListAPIView):
         if sub_category_name:
             qs = qs.filter(subcategory__name__iexact=sub_category_name)
         return qs
+
+class BrandListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        # Only active products, non-null brands
+        brands = (
+            Product.objects.filter(is_active=True)
+            .exclude(brand__isnull=True)
+            .exclude(brand__exact="")
+            .values_list("brand", flat=True)
+            .distinct()
+            .order_by("brand")
+        )
+        return Response({"brands": list(brands)})

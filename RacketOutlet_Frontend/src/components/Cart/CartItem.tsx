@@ -38,7 +38,11 @@ const CartItemComponent: React.FC<Props> = ({ item }) => {
     dispatch(removeCartItemThunk(item.id));
   };
 
-  const price = item.product.discounted_price ?? item.product.price;
+  // ✅ Use discounted price if available, otherwise regular price
+  const price = Number(item.product.discounted_price ?? item.product.price);
+
+  // ✅ Subtotal calculated dynamically based on quantity
+  const subtotal = price * Number(item.quantity);
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between bg-white rounded-2xl shadow p-4 gap-4">
@@ -52,7 +56,7 @@ const CartItemComponent: React.FC<Props> = ({ item }) => {
         <div className="flex flex-col">
           <h3 className="font-semibold text-lg">{item.product.name}</h3>
           <p className="text-gray-500 text-sm">
-            Price: ₹{Number(price).toFixed(2)}
+            Price: ₹{price.toFixed(2)}
           </p>
         </div>
       </Link>
@@ -85,7 +89,7 @@ const CartItemComponent: React.FC<Props> = ({ item }) => {
 
       {/* Subtotal */}
       <div className="font-semibold text-gray-800">
-        Subtotal: ₹{parseFloat(item.subtotal.toString()).toFixed(2)}
+        Subtotal: ₹{subtotal.toFixed(2)}
       </div>
     </div>
   );

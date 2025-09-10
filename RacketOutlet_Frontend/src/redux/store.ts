@@ -11,15 +11,19 @@ import productSearchReducer from "./features/products/productSearchSlice";
 
 import recentlyViewedReducer from "./features/products/recentlyViewedSlice";
 import cartReducer from "./features/cart/cartSlice";
-import ordersReducer  from "./features/orders/ordersSlice";
-import orderDetailSlice  from "./features/orders/orderDetailSlice";
+import ordersReducer from "./features/orders/ordersSlice";
+import orderDetailSlice from "./features/orders/orderDetailSlice";
 
 import wishlistSlice from "./features/wishlist/wishlistSlice";
-import preloadReducer from "./features/preload/preloadSlice"; // ✅ import preload slice
+import preloadReducer from "./features/preload/preloadSlice";
 
 import { useDispatch, useSelector } from "react-redux";
 import type { TypedUseSelectorHook } from "react-redux";
 
+import type { ThunkDispatch } from "@reduxjs/toolkit";
+import type { AnyAction } from "redux";
+
+// ------------------ Store ------------------
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -35,11 +39,16 @@ export const store = configureStore({
     orders: ordersReducer,
     orderDetail: orderDetailSlice,
     productSearch: productSearchReducer,
-    preload: preloadReducer, // ✅ register preload slice
+    preload: preloadReducer,
   },
 });
 
+// ------------------ Types ------------------
 export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
+
+// AppDispatch now includes thunk dispatch
+export type AppDispatch = ThunkDispatch<RootState, unknown, AnyAction>;
+
+// ------------------ Typed Hooks ------------------
 export const useAppDispatch = () => useDispatch<AppDispatch>();
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;

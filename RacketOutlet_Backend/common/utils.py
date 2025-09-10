@@ -1,23 +1,16 @@
-import os
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 
-def send_email(to_email, subject, message, html_message=None):
+def send_email(to_email, subject, html_message):
     """
-    Send email using Django's backend.
-    If using file-based backend, ensure folder exists.
+    Send an HTML-only email. Sets a fallback text to avoid email client issues.
     """
-    print(f"[DEBUG] send_email called for: {to_email}, subject: {subject}")
-
-    # Ensure folder exists if using file-based backend
-    if settings.EMAIL_BACKEND == "django.core.mail.backends.filebased.EmailBackend":
-        os.makedirs(settings.EMAIL_FILE_PATH, exist_ok=True)
-
-    send_mail(
+    fallback_text = "Your email client does not support HTML. Please view this email in a browser."
+    email = EmailMultiAlternatives(
         subject=subject,
-        message=message,
+        body=fallback_text,
         from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[to_email],
-        html_message=html_message,
-        fail_silently=False,
+        to=[to_email],
     )
+    email.attach_alternative(html_message, "text/html")
+    email.send()

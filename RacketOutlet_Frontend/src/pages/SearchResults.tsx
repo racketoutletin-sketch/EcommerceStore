@@ -1,59 +1,65 @@
 import React, { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import type { RootState, AppDispatch } from "../redux/store";
+import { useAppDispatch, useAppSelector } from "../redux/store";
 import {
   fetchProducts,
+  fetchBrands,
   setFilters,
   setPage,
-  setPageSize,
-  nextPage,
-  prevPage,
+  clearCache,
   selectPagination,
 } from "../redux/features/products/productSearchSlice";
 import type { SortOption } from "../redux/features/products/productSearchSlice";
+
 import Pagination from "../components/Pagination";
 import ProductCard from "../components/ProductCard";
 import TopBar from "../components/HomePage/TopBar";
 import Header from "../components/HomePage/Header";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
 
-const brands = ["Head", "Yonex", "Wilson", "Nike", "Adidas", "Li-Ning", "PowerPlay"];
-
 const SearchResults: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const { products, loading, error, filters, count } = useSelector(
-    (state: RootState) => state.productSearch
-  );
-  const { currentPage, totalPages } = useSelector(selectPagination);
+  const dispatch = useAppDispatch();
+  const { products, loading, error, filters, count, brands, brandsLoading, pageCache } =
+    useAppSelector((state) => state.productSearch);
+  const { currentPage, totalPages } = useAppSelector(selectPagination);
 
   const types = Array.from(new Set(products.map((p) => p.sub_category_name)));
-
   const [searchText, setSearchText] = useState(filters.search || "");
 
+  // ------------------ Fetch brands only ------------------
+  React.useEffect(() => {
+    dispatch(fetchBrands());
+  }, [dispatch]);
+
+  // ------------------ Generic Filter Updater ------------------
+  const updateFilter = (payload: Partial<typeof filters>) => {
+    dispatch(clearCache());
+    const updatedFilters = { ...filters, ...payload, page: 1 };
+    dispatch(setFilters(updatedFilters));
+    dispatch(fetchProducts(updatedFilters));
+  };
+
+  // ------------------ Handlers ------------------
   const handleSearchClick = () => {
-    dispatch(setFilters({ search: searchText }));
-    dispatch(fetchProducts());
+    if (!searchText.trim()) return; // prevent empty search
+    updateFilter({ search: searchText });
   };
+  const handleBrandChange = (brand: string) => updateFilter({ brand });
+  const handleTypeChange = (type: string) => updateFilter({ type });
+  const handleSortChange = (sort: SortOption | "") =>
+    updateFilter({ sort: sort || undefined });
+  const handlePageSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) =>
+    updateFilter({ page_size: Number(e.target.value) });
 
-  const handleBrandChange = (brand: string) => {
-    dispatch(setFilters({ brand }));
-    dispatch(fetchProducts());
+  // ------------------ Pagination Handlers ------------------
+  const handlePageChange = (page: number) => {
+    dispatch(setPage(page));
+    if (!pageCache[page]) {
+      dispatch(fetchProducts({ ...filters, page }));
+    }
   };
-
-  const handleTypeChange = (type: string) => {
-    dispatch(setFilters({ type }));
-    dispatch(fetchProducts());
-  };
-
-  const handleSortChange = (sort: SortOption | "") => {
-    dispatch(setFilters({ sort: sort || undefined }));
-    dispatch(fetchProducts());
-  };
-
-  const handlePageSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    dispatch(setPageSize(Number(e.target.value)));
-    dispatch(fetchProducts());
-  };
+  const handlePrevPage = () => handlePageChange(Math.max(1, currentPage - 1));
+  const handleNextPage = () => handlePageChange(Math.min(totalPages, currentPage + 1));
+  const handlePageSelect = (page: number) => handlePageChange(page);
 
   return (
     <div className="w-full bg-gray-50 min-h-screen">
@@ -70,6 +76,7 @@ const SearchResults: React.FC = () => {
               placeholder="Search..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearchClick()}
               className="border p-2 rounded min-w-[200px] pr-10"
             />
             <button
@@ -88,11 +95,12 @@ const SearchResults: React.FC = () => {
             className="border p-2 rounded"
           >
             <option value="">All Brands</option>
-            {brands.map((b) => (
-              <option key={b} value={b}>
-                {b}
-              </option>
-            ))}
+            {!brandsLoading &&
+              brands.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
           </select>
 
           {/* Type */}
@@ -141,22 +149,29 @@ const SearchResults: React.FC = () => {
         </div>
 
         {/* Results */}
-        {loading && <p className="text-black">Loading...</p>}
+        {loading && !pageCache[currentPage] && <p className="text-black">Loading...</p>}
         {error && <p className="text-red-500">{error}</p>}
 
-        {!loading && !error && (
+        {!error && products.length > 0 && (
           <>
             <div className="flex items-baseline justify-between mb-2">
               <p className="font-bold">
                 {count} products found
                 {filters.brand && (
-                  <span className="text-sm font-normal text-gray-500"> · brand: {filters.brand}</span>
+                  <span className="text-sm font-normal text-gray-500">
+                    {" "}
+                    · brand: {filters.brand}
+                  </span>
                 )}
                 {filters.type && (
-                  <span className="text-sm font-normal text-gray-500"> · type: {filters.type}</span>
+                  <span className="text-sm font-normal text-gray-500">
+                    {" "}
+                    · type: {filters.type}
+                  </span>
                 )}
                 {filters.search && (
                   <span className="text-sm font-normal text-gray-500">
+                    {" "}
                     · search: “{filters.search}”
                   </span>
                 )}
@@ -169,7 +184,7 @@ const SearchResults: React.FC = () => {
 
             {/* Grid of Product Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {products.map((product) => (
+              {(pageCache[currentPage] || products).map((product) => (
                 <div
                   key={product.id}
                   className="bg-white rounded-2xl shadow-md p-4 hover:shadow-lg transition duration-200"
@@ -178,13 +193,11 @@ const SearchResults: React.FC = () => {
                     id={product.id}
                     name={product.name}
                     description={product.description}
-                    main_image_url={product.main_image_url}   // ✅ use main_image_url
-                    images={
-                      (product.images ?? [])
-                        .map((img) => img?.image_url)
-                        .filter((url): url is string => Boolean(url)) // ✅ removes null/undefined
-                    }
-                    price={parseFloat(product.price)}     // ✅ original price
+                    main_image_url={product.main_image_url}
+                    images={(product.images ?? [])
+                      .map((img) => img?.image_url)
+                      .filter((url): url is string => Boolean(url))}
+                    price={parseFloat(product.price)}
                     discounted_price={
                       product.discounted_price
                         ? parseFloat(product.discounted_price)
@@ -196,18 +209,22 @@ const SearchResults: React.FC = () => {
               ))}
             </div>
 
-
             {/* Pagination */}
             <div className="mt-6">
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
-                onPrev={() => dispatch(prevPage())}
-                onNext={() => dispatch(nextPage())}
-                onPageSelect={(p) => dispatch(setPage(p))}
+                onPrev={handlePrevPage}
+                onNext={handleNextPage}
+                onPageSelect={handlePageSelect}
               />
             </div>
           </>
+        )}
+
+        {/* Show message if no products found */}
+        {!error && products.length === 0 && !loading && (
+          <p className="text-gray-500 mt-6">Start typing and press Enter to search products.</p>
         )}
       </div>
     </div>

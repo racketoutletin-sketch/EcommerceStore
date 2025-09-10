@@ -141,24 +141,6 @@ const OrdersPage = () => {
                 <span className="text-gray-600 text-sm">Items: {order.items.length}</span>
               </div>
 
-              {/* Customer Info */}
-              {order.user && (
-                <div className="bg-gray-50 p-3 rounded-lg mb-4 text-sm">
-                  <h3 className="font-semibold mb-2 text-gray-800">Customer Info</h3>
-                  <p><span className="font-semibold">Name:</span> {order.user.first_name} {order.user.last_name}</p>
-                  <p><span className="font-semibold">Email:</span> {order.user.email}</p>
-                  <p><span className="font-semibold">Phone:</span> {order.user.phone_number}</p>
-                  <p><span className="font-semibold">Address:</span> {order.user.address}</p>
-                </div>
-              )}
-
-              {/* Order details */}
-              <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-700">
-                <p><span className="font-semibold">Shipping:</span> {order.shipping_address}</p>
-                <p><span className="font-semibold">Billing:</span> {order.billing_address}</p>
-                {order.notes && <p><span className="font-semibold">Notes:</span> {order.notes}</p>}
-              </div>
-
               {/* Products */}
               <h2 className="font-semibold mb-2 text-gray-800">Products:</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
