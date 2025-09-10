@@ -181,6 +181,7 @@ class ProductImage(models.Model):
     )
     image = models.ImageField(
         storage=SupabaseStorage,
+        max_length=500,
         upload_to="product_images/"
     )
     image_url = models.URLField(max_length=500, blank=True, null=True)  # increased from 200 → 500
