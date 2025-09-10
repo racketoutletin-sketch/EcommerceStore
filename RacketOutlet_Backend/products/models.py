@@ -169,16 +169,21 @@ class Product(models.Model):
     def current_price(self):
         return self.discounted_price if self.discounted_price else self.price
 
-
 # -------------------------------
 # Product Image Model
 # -------------------------------
 class ProductImage(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images', db_index=True)
-    image = models.ImageField(
-       storage=SupabaseStorage, upload_to="product_images/"
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='images',
+        db_index=True
     )
-    image_url = models.URLField(blank=True, null=True)
+    image = models.ImageField(
+        storage=SupabaseStorage,
+        upload_to="product_images/"
+    )
+    image_url = models.URLField(max_length=500, blank=True, null=True)  # increased from 200 → 500
     alt_text = models.CharField(max_length=255, blank=True, null=True, db_index=True)
     is_primary = models.BooleanField(default=False, db_index=True)
 
