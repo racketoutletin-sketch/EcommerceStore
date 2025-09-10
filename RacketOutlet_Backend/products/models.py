@@ -127,7 +127,7 @@ class Product(models.Model):
         blank=True, null=True
         
     )
-    main_image_url = models.URLField(blank=True, null=True)
+    main_image_url = models.URLField(max_length=500, blank=True, null=True)
 
     extra_attributes = models.JSONField(blank=True, null=True)
 
