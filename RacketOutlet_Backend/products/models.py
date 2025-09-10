@@ -103,7 +103,7 @@ class SubCategory(models.Model):
 # Product Model
 # -------------------------------
 class Product(models.Model):
-    name = models.CharField(max_length=200, db_index=True)
+    name = models.CharField(max_length=255, db_index=True)
     slug = models.SlugField(max_length=255, unique=True, blank=True, null=True, db_index=True)
     description = models.TextField()
     subcategory = models.ForeignKey(
@@ -113,17 +113,19 @@ class Product(models.Model):
     discounted_price = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True, validators=[MinValueValidator(0)], db_index=True
     )
-    sku = models.CharField(max_length=100, unique=True, db_index=True)
-    brand = models.CharField(max_length=100, blank=True, null=True, db_index=True)
+    sku = models.CharField(max_length=255, unique=True, db_index=True)
+    brand = models.CharField(max_length=255, blank=True, null=True, db_index=True)
     weight = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True, validators=[MinValueValidator(0)]
     )
-    dimensions = models.CharField(max_length=100, blank=True, null=True)
-    material = models.CharField(max_length=100, blank=True, null=True)
+    dimensions = models.CharField(max_length=255, blank=True, null=True)
+    material = models.CharField(max_length=255, blank=True, null=True)
 
     main_image = models.ImageField(
        storage=SupabaseStorage, upload_to="product_main_images/",
+       max_length=255,
         blank=True, null=True
+        
     )
     main_image_url = models.URLField(blank=True, null=True)
 
