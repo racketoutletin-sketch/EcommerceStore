@@ -24,6 +24,7 @@ interface ProductListState {
   error: string | null;
   page: number;        // current page
   totalPages: number;  // total number of pages
+  total: number;       // total number of products
 }
 
 const initialState: ProductListState = {
@@ -34,6 +35,7 @@ const initialState: ProductListState = {
   error: null,
   page: 1,
   totalPages: 1,
+  total: 0,
 };
 
 // Type guard
@@ -61,32 +63,43 @@ export const fetchProductsBySubCategory = createAsyncThunk(
         subcategory_id: params.subId.toString(),
       };
 
-      if (params.sort) queryObj.sort = params.sort;
-      if (params.productType) queryObj.product_type = params.productType;
-      if (params.brand) queryObj.brand = params.brand;
-      if (params.priceMin !== undefined)
+      // only add when meaningful
+      if (params.sort && params.sort !== "relevance") {
+        queryObj.sort = params.sort;
+      }
+      if (params.productType && params.productType.trim() !== "") {
+        queryObj.product_type = params.productType;
+      }
+      if (params.brand && params.brand.trim() !== "") {
+        queryObj.brand = params.brand;
+      }
+      if (params.priceMin !== undefined && params.priceMin > 0) {
         queryObj.price_min = params.priceMin.toString();
-      if (params.priceMax !== undefined)
+      }
+      if (params.priceMax !== undefined && params.priceMax > 0) {
         queryObj.price_max = params.priceMax.toString();
-      if (params.inStock !== undefined)
-        queryObj.in_stock = params.inStock.toString();
+      }
+      if (params.inStock === true) {
+        queryObj.in_stock = "true";
+      }
 
       // pagination defaults
       const limit = params.limit ?? 16;
       const page = params.page ?? 1;
-      const offset = (page - 1) * limit;
-
       queryObj.limit = limit.toString();
-      queryObj.offset = offset.toString();
+      queryObj.page = page.toString();
 
       const query = new URLSearchParams(queryObj).toString();
       const response = await api.get(
         `https://wzonllfccvmvoftahudd.supabase.co/functions/v1/get-products-with-subcategory?${query}`
       );
 
+      console.log("API Response:", response.data);
+
       const products: Product[] = response.data.results ?? [];
-      const total: number = response.data.total ?? products.length;
-      const totalPages = Math.ceil(total / limit);
+      const total: number = response.data.total ?? 0;
+      const pageFromApi: number = response.data.page ?? page;
+      const totalPages: number = response.data.totalPages ?? 1;
 
       const brands: string[] = Array.from(
         new Set(products.map((p) => p.brand).filter(isString))
@@ -100,8 +113,9 @@ export const fetchProductsBySubCategory = createAsyncThunk(
         products,
         brands,
         productTypes,
-        page,
+        page: pageFromApi,
         totalPages,
+        total,
       };
     } catch (err: any) {
       return rejectWithValue(
@@ -111,6 +125,7 @@ export const fetchProductsBySubCategory = createAsyncThunk(
   }
 );
 
+
 const productListReducer = createSlice({
   name: "productListView",
   initialState,
@@ -119,6 +134,7 @@ const productListReducer = createSlice({
       state.searchResults = [];
       state.page = 1;
       state.totalPages = 1;
+      state.total = 0;
     },
   },
   extraReducers: (builder) => {
@@ -134,6 +150,7 @@ const productListReducer = createSlice({
         state.availableProductTypes = action.payload.productTypes;
         state.page = action.payload.page;
         state.totalPages = action.payload.totalPages;
+        state.total = action.payload.total;
       })
       .addCase(fetchProductsBySubCategory.rejected, (state, action) => {
         state.loading = false;
