@@ -19,18 +19,18 @@ const FeaturedCollections: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Step 1: Load cached data immediately
+    // Load cached data first
     const cachedData = localStorage.getItem(CACHE_KEY);
     if (cachedData) {
       try {
         setCollections(JSON.parse(cachedData));
         setLoading(false);
       } catch {
-        // Ignore corrupt cache
+        console.warn("Corrupt cache, ignoring...");
       }
     }
 
-    // Step 2: Fetch fresh data in the background
+    // Fetch fresh data
     const fetchCollections = async () => {
       try {
         const res = await fetch(
@@ -43,14 +43,13 @@ const FeaturedCollections: React.FC = () => {
         const oldVersion = Number(localStorage.getItem(CACHE_VERSION_KEY));
 
         if (newVersion !== oldVersion) {
-          const freshData: Collection[] = (data.featuredProducts || []).map(
-            (item: any) => ({
-              title: item.name,
-              desc: item.description,
-              img: item.main_image_url,
-              productId: item.product_id,
-            })
-          );
+          const freshData: Collection[] = (data.featuredProducts || []).map((item: any) => ({
+            title: item.name ?? "No Title",
+            desc: item.description ?? "No Description",
+            img: item.main_image_url ?? "/default.png",
+            productId: item.product_id ?? 0,
+          }));
+
           localStorage.setItem(CACHE_KEY, JSON.stringify(freshData));
           localStorage.setItem(CACHE_VERSION_KEY, newVersion.toString());
           setCollections(freshData);
@@ -66,8 +65,8 @@ const FeaturedCollections: React.FC = () => {
   }, []);
 
   if (loading) return <Loader />;
-  if (collections.length === 0)
-    return <p className="text-center py-16">No collections available.</p>;
+  if (!collections.length)
+    return <p className="text-center py-16 text-gray-500">No collections available.</p>;
 
   return (
     <div className="mb-8">
@@ -84,7 +83,7 @@ const FeaturedCollections: React.FC = () => {
             <img
               src={col.img || "/default.png"}
               alt={col.title}
-              className="w-full h-48 object-cover"
+              className="w-full h-48 object-cover rounded-lg"
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).src = "/default.png";
               }}

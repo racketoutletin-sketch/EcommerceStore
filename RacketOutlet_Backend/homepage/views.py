@@ -16,6 +16,46 @@ from .serializers import (
     FeaturedProductSerializer,
     ShopTheLookSerializer,
 )
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from products.models import Category  # adjust if the model is different
+from products.serializers import CategoryWithSubSerializer
+
+
+class HomePageView(APIView):
+    """    A single API endpoint that aggregates all homepage data.
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        banners = BannerSerializer(Banner.objects.all().order_by("-created_at"), many=True).data
+        categories = HomeCategoriesSerializer(HomeCategories.objects.all().order_by("-created_at"), many=True).data
+        videos = HomeVideoSerializer(HomeVideo.objects.all().order_by("-created_at"), many=True).data
+        exclusive_products = ExclusiveProductSerializer(
+            ExclusiveProduct.objects.select_related("product").order_by("-created_at"), many=True
+        ).data
+        featured_products = FeaturedProductSerializer(
+            FeaturedProduct.objects.select_related("product").order_by("-created_at"), many=True
+        ).data
+        shop_the_look = ShopTheLookSerializer(ShopTheLook.objects.all().order_by("-id"), many=True).data
+        # featured_categories = FeaturedCategorySerializer(
+        #     Category.objects.filter(is_featured=True, is_active=True).order_by("id"), many=True
+        # ).data
+        featured_categories = CategoryWithSubSerializer(
+    Category.objects.filter(is_featured=True, is_active=True).prefetch_related("subcategories").order_by("id"),
+    many=True
+).data
+
+        return Response({
+            "featured_categories": featured_categories,   # ✅ added
+            "banners": banners,
+            "categories": categories,
+            "videos": videos,
+            "exclusive_products": exclusive_products,
+            "shop_the_look": shop_the_look,
+            "featured_products": featured_products,
+        })
+
 
 
 # -------------------------

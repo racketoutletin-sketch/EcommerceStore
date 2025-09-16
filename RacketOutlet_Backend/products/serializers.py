@@ -64,14 +64,12 @@ class ProductStatusSerializer(serializers.ModelSerializer):
 # SubCategory Serializers
 # -------------------------------
 class SubCategorySerializer(serializers.ModelSerializer):
-    products = ProductSerializer(many=True, read_only=True)
 
     class Meta:
         model = SubCategory
         fields = [
             'id', 'name', 'slug', 'description',
-            'image_url', 'is_featured', 'is_active',
-            'products'
+            'image_url', 'is_featured', 'is_active'
         ]
 
 
@@ -96,7 +94,24 @@ class CategorySerializer(serializers.ModelSerializer):
         ]
 
 
-class FeaturedCategorySerializer(serializers.ModelSerializer):
+# class FeaturedCategorySerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Category
+#         fields = ['id', 'name', 'slug', 'description', 'image_url', 'is_active']
+
+
+# serializers.py
+from rest_framework import serializers
+from .models import Category, SubCategory
+
+class SubCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubCategory
+        fields = ["id", "name", "image_url"]
+
+class CategoryWithSubSerializer(serializers.ModelSerializer):
+    subcategories = SubCategorySerializer(many=True, read_only=True)
+
     class Meta:
         model = Category
-        fields = ['id', 'name', 'slug', 'description', 'image_url', 'is_active']
+        fields = ["id", "name", "subcategories", "image_url", 'description']

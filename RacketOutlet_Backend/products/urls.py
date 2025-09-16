@@ -3,7 +3,7 @@ from .views import *
 
 urlpatterns = [
     # Featured lists
-    path('categories/featured/', FeaturedCategoryListView.as_view(), name='featured-category-list'),
+    # path('categories/featured/', FeaturedCategoryListView.as_view(), name='featured-category-list'),
     path('subcategories/featured/', FeaturedSubCategoryListView.as_view(), name='featured-subcategory-list'),
     path('products/featured/', FeaturedProductListView.as_view(), name='featured-product-list'),
 

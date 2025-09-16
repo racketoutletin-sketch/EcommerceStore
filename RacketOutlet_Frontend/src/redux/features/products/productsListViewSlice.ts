@@ -9,7 +9,6 @@ interface Product {
   price: number;
   current_price: number;
   discounted_price?: number | null;
-  images?: string[];
   main_image_url?: string | null;
   quantity: number;
   description?: string;

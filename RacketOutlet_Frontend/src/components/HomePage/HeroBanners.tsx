@@ -1,61 +1,35 @@
-// src/components/HeroBanners.tsx
 import React, { useEffect, useState } from "react";
 import Slider from "react-slick";
 import { useNavigate } from "react-router-dom";
 import "slick-carousel/slick/slick.css"; 
 import "slick-carousel/slick/slick-theme.css";
-import Loader from '../Loader';
+import Loader from "../Loader";
 
-interface Banner {
-  id: number;
-  title: string;
-  subtitle: string;
-  image: string;
-  subcategory_id: number | null;
-  product_id: number | null;
-}
+import { fetchHomeData, selectBanners, selectHomeData } from "../../redux/features/home/homeSlice";
+import { useAppDispatch, useAppSelector } from "../../redux/store";
 
 const HeroBanners: React.FC = () => {
-  const [banners, setBanners] = useState<Banner[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [sliderKey, setSliderKey] = useState(0); // Force Slick refresh
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
+  // Select banners and loading state from Redux
+  const banners = useAppSelector(selectBanners);
+  const homeData = useAppSelector(selectHomeData);
+  const loading = useAppSelector((state) => state.home.loading);
+
+  // Force Slick slider refresh
+  const [sliderKey, setSliderKey] = useState(0);
+
+  // Fetch home data only if not already in Redux
   useEffect(() => {
-    const fetchBanners = async () => {
-      try {
-        const res = await fetch(
-          "https://wzonllfccvmvoftahudd.supabase.co/functions/v1/get-banners"
-          
-        );
-        const data = await res.json();
+    if (!homeData) {
+      dispatch(fetchHomeData());
+    }
+  }, [dispatch, homeData]);
 
-        const newVersion = data.version ?? 1;
-        const oldVersion = Number(localStorage.getItem("banners_cache_version"));
-
-        const cachedData = localStorage.getItem("banners_data");
-
-        if (newVersion !== oldVersion || !cachedData) {
-          // ✅ Cache is stale or first load → update storage and state
-          setBanners(data.banners || []);
-          localStorage.setItem("banners_data", JSON.stringify(data.banners || []));
-          localStorage.setItem("banners_cache_version", newVersion.toString());
-        } else {
-          // ✅ Use cached data
-          setBanners(JSON.parse(cachedData));
-        }
-
-        // ✅ Force Slider refresh
-        setSliderKey((prev) => prev + 1);
-      } catch (err) {
-        // console.error("Error fetching banners:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBanners();
-  }, []);
+  useEffect(() => {
+    if (banners.length > 0) setSliderKey((prev) => prev + 1);
+  }, [banners]);
 
   const settings = {
     dots: true,
@@ -75,21 +49,15 @@ const HeroBanners: React.FC = () => {
     ),
   };
 
-  const handleClick = (banner: Banner) => {
-    if (banner.product_id) {
-      navigate(`/products/${banner.product_id}`);
-    } else if (banner.subcategory_id) {
-      navigate(`/subcategories/${banner.subcategory_id}/products`);
-    }
+  const handleClick = (banner: typeof banners[0]) => {
+    if (banner.product) navigate(`/products/${banner.product}`);
+    else if (banner.subcategory) navigate(`/subcategories/${banner.subcategory}/products`);
   };
 
-  if (loading) {
-    return <Loader />;
-  }
+  if (loading) return <Loader />;
 
-  if (banners.length === 0) {
+  if (banners.length === 0)
     return <p className="text-center py-16">No banners available.</p>;
-  }
 
   return (
     <div className="mb-8">
@@ -101,7 +69,7 @@ const HeroBanners: React.FC = () => {
             onClick={() => handleClick(banner)}
           >
             <img
-              src={`https://wzonllfccvmvoftahudd.supabase.co/storage/v1/object/public/media/${banner.image}`}
+              src={banner.image}
               alt={banner.title}
               className="w-full h-full object-cover"
               loading="lazy"
@@ -110,9 +78,7 @@ const HeroBanners: React.FC = () => {
               <h2 className="text-white text-3xl md:text-5xl font-bold">
                 {banner.title}
               </h2>
-              {banner.subtitle && (
-                <p className="text-white mt-2">{banner.subtitle}</p>
-              )}
+              {banner.subtitle && <p className="text-white mt-2">{banner.subtitle}</p>}
             </div>
           </div>
         ))}

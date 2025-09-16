@@ -23,6 +23,8 @@ import type { TypedUseSelectorHook } from "react-redux";
 import type { ThunkDispatch } from "@reduxjs/toolkit";
 import type { AnyAction } from "redux";
 
+import homeReducer from "./features/home/homeSlice";
+
 // ------------------ Store ------------------
 export const store = configureStore({
   reducer: {
@@ -40,6 +42,7 @@ export const store = configureStore({
     orderDetail: orderDetailSlice,
     productSearch: productSearchReducer,
     preload: preloadReducer,
+    home: homeReducer,
   },
 });
 

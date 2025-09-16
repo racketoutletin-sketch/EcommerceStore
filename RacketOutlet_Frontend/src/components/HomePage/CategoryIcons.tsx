@@ -1,71 +1,24 @@
-// src/components/HomepageSubcategories.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Loader from "../Loader";
 
-interface Subcategory {
-  id: number;
-  name: string;
-  description: string;
-  image: string;
-}
-
-const CACHE_KEY = "Featuredsubcategories_data";
-const CACHE_VERSION_KEY = "Featuredsubcategories_cache_version";
+import { fetchHomeData, selectCategories, selectHomeData } from "../../redux/features/home/homeSlice";
+import { useAppDispatch, useAppSelector } from "../../redux/store";
 
 const HomepageSubcategories: React.FC = () => {
-  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
+  const subcategories = useAppSelector(selectCategories);
+  const homeData = useAppSelector(selectHomeData);
+  const loading = useAppSelector((state) => state.home.loading);
+
+  // Fetch home data only if Redux store is empty
   useEffect(() => {
-  // Step 1: Load cached immediately
-  const cachedData = localStorage.getItem(CACHE_KEY);
-  if (cachedData) {
-    try {
-      setSubcategories(JSON.parse(cachedData));
-      setLoading(false);
-    } catch {
-      console.warn("Corrupt cache, ignoring...");
+    if (!homeData) {
+      dispatch(fetchHomeData());
     }
-  }
-
-  // Step 2: Always fetch fresh version in background
-  const fetchSubcategories = async () => {
-  console.log("fetchSubcategories started...");
-  try {
-    const res = await fetch(
-      "https://wzonllfccvmvoftahudd.supabase.co/functions/v1/get-homepage-categories"
-    );
-    if (!res.ok) throw new Error(`API Error: ${res.status}`);
-
-    const data = await res.json();
-    console.log("API response:", data);
-
-    const newVersion = data.version ?? 1;
-    const oldVersion = Number(localStorage.getItem(CACHE_VERSION_KEY));
-
-    if (newVersion !== oldVersion) {
-      console.log(`Version changed ${oldVersion} → ${newVersion}`);
-      const freshData: Subcategory[] = data.sub_categories || [];
-      localStorage.setItem(CACHE_KEY, JSON.stringify(freshData));
-      localStorage.setItem(CACHE_VERSION_KEY, newVersion.toString());
-      setSubcategories(freshData);
-    } else {
-      console.log("Cache still valid, no update needed");
-    }
-  } catch (err) {
-    console.error("Error in fetchSubcategories:", err);
-  } finally {
-    // ✅ Always stop loading after API finishes
-    setLoading(false);
-  }
-};
-
-
-  fetchSubcategories(); // ✅ make sure it's called
-}, []);
-
+  }, [dispatch, homeData]);
 
   if (loading) return <Loader />;
   if (subcategories.length === 0)
@@ -77,20 +30,20 @@ const HomepageSubcategories: React.FC = () => {
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
         {subcategories.map((cat) => (
           <div
-            key={cat.id}
+            key={cat.subcategory.id}
             className="border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition p-4"
-            onClick={() => navigate(`/subcategories/${cat.id}/products`)}
+            onClick={() => navigate(`/subcategories/${cat.subcategory.id}/products`)}
           >
             <img
-              src={cat.image || "/default.png"}
-              alt={cat.name}
+              src={cat.subcategory.image || "/default.png"}
+              alt={cat.subcategory.name}
               className="w-full h-48 object-cover"
               onError={(e) => {
                 e.currentTarget.src = "/default.png";
               }}
             />
-            <h3 className="text-black font-semibold text-base mt-3">{cat.name}</h3>
-            <p className="text-gray-500 text-sm mt-1 line-clamp-2">{cat.description}</p>
+            <h3 className="text-black font-semibold text-base mt-3">{cat.subcategory.name}</h3>
+            <p className="text-gray-500 text-sm mt-1 line-clamp-2">{cat.subcategory.description}</p>
           </div>
         ))}
       </div>

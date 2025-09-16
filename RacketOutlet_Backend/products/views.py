@@ -7,7 +7,8 @@ from rest_framework.views import APIView
 
 from .models import Category, SubCategory, Product
 from .serializers import (
-    FeaturedCategorySerializer, FeaturedSubCategorySerializer,
+    # FeaturedCategorySerializer, 
+    FeaturedSubCategorySerializer,
     SubCategorySerializer, CategorySerializer,
     FeaturedProductSerializer, ProductStatusSerializer, ProductSerializer
 )
@@ -17,12 +18,12 @@ from common.pagination import StandardResultsSetPagination
 # -------------------------------
 # Featured Categories
 # -------------------------------
-class FeaturedCategoryListView(generics.ListAPIView):
-    queryset = Category.objects.filter(is_active=True, is_featured=True)
-    serializer_class = FeaturedCategorySerializer
-    permission_classes = [AllowAny]
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['name', 'description']
+# class FeaturedCategoryListView(generics.ListAPIView):
+#     queryset = Category.objects.filter(is_active=True, is_featured=True)
+#     serializer_class = FeaturedCategorySerializer
+#     permission_classes = [AllowAny]
+#     filter_backends = [filters.SearchFilter]
+#     search_fields = ['name', 'description']
 
 
 # -------------------------------

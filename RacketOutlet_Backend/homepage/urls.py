@@ -6,6 +6,7 @@ from .views import (
     ExclusiveProductViewSet,
     FeaturedProductViewSet,
     ShopTheLookViewSet,
+    HomePageView,
 )
 
 # -------------------------
@@ -72,4 +73,6 @@ urlpatterns = [
     # Shop The Look
     path("shop-the-look/", shop_the_look_list, name="shop-the-look-list"),
     path("shop-the-look/<int:pk>/", shop_the_look_detail, name="shop-the-look-detail"),
+
+    path("homepage/", HomePageView.as_view(), name="homepage"),
 ]

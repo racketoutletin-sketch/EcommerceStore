@@ -178,7 +178,6 @@ const ProductsBySubCategory = () => {
                 name={product.name ?? ""}
                 description={product.description ?? ""}
                 main_image_url={product.main_image_url}
-                images={product.images}
                 price={Number(product.price)}
                 discounted_price={
                   product.discounted_price
