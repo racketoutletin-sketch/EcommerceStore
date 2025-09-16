@@ -83,7 +83,7 @@ export const fetchProductById = createAsyncThunk<
   async (productId, { rejectWithValue }) => {
     try {
       const response = await api.get(
-        `https://wzonllfccvmvoftahudd.supabase.co/functions/v1/get-product--with-product-ID?id=${productId}`
+        `api/products/view/${productId}`
       );
       return response.data as ProductDetailType;
     } catch (err: any) {

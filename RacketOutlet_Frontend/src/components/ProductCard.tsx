@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../redux/store";
 import {
@@ -39,30 +39,26 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const cartItem = cart?.items?.find((item) => item.product.id === id);
   const inCart = !!cartItem;
 
-  // ✅ Images: main_image_url → main_image → images[] → fallback
-  
-const productImages: string[] = (() => {
-  if (main_image_url) {
-    return [main_image_url, ...(images || [])];
-  }
-  if (images && images.length > 0) {
-    return images;
-  }
-  return ["/default.png"];
-})();
+  // Flicker-free image carousel
+  const productImages: string[] = (() => {
+    if (main_image_url) return [main_image_url, ...(images || [])];
+    if (images.length > 0) return images;
+    return ["/default.png"];
+  })();
 
+  // Swipe support refs
+  const startX = useRef(0);
+  const isDragging = useRef(false);
 
-
-  // ✅ Navigate images
-  const handlePrevImage = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handlePrevImage = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setCurrentImageIndex((prev) =>
       prev === 0 ? productImages.length - 1 : prev - 1
     );
   };
 
-  const handleNextImage = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleNextImage = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setCurrentImageIndex((prev) =>
       prev === productImages.length - 1 ? 0 : prev + 1
     );
@@ -73,7 +69,6 @@ const productImages: string[] = (() => {
     setCurrentImageIndex(index);
   };
 
-  // ✅ Add to cart
   const handleAddToCart = async (quantity: number, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) return navigate("/login");
@@ -95,7 +90,6 @@ const productImages: string[] = (() => {
     }
   };
 
-  // ✅ Buy now
   const handleBuyNow = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) return navigate("/login");
@@ -107,7 +101,7 @@ const productImages: string[] = (() => {
       product: {
         id,
         name,
-        main_image: productImages[0], // ✅ always first resolved image
+        main_image: productImages[0],
         price,
         discounted_price,
         current_price: finalPrice,
@@ -127,49 +121,69 @@ const productImages: string[] = (() => {
       onClick={handleView}
       className="bg-white w-full rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-shadow duration-300 relative group border cursor-pointer"
     >
-      {/* Image carousel */}
-      <div className="relative w-full h-40 sm:h-48 md:h-56 lg:h-64 overflow-hidden">
-        <img
-          src={productImages[currentImageIndex]}
-          alt={name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-        />
+      {/* Flicker-free Image Carousel with swipe */}
+      <div
+        className="relative w-full h-40 sm:h-48 md:h-56 lg:h-64 overflow-hidden"
+        onPointerDown={(e) => {
+          startX.current = e.clientX;
+          isDragging.current = true;
+        }}
+        onPointerMove={(e) => {
+          if (!isDragging.current) return;
+          const diff = e.clientX - startX.current;
+          if (diff > 50) {
+            handlePrevImage();
+            isDragging.current = false;
+          } else if (diff < -50) {
+            handleNextImage();
+            isDragging.current = false;
+          }
+        }}
+        onPointerUp={() => (isDragging.current = false)}
+        onPointerLeave={() => (isDragging.current = false)}
+      >
+        {productImages.map((img, idx) => (
+          <img
+            key={idx}
+            src={img}
+            alt={name}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+              idx === currentImageIndex ? "opacity-100" : "opacity-0"
+            }`}
+          />
+        ))}
 
-        {/* Left/Right buttons */}
+        {/* Left/Right Buttons */}
         {productImages.length > 1 && (
           <>
             <button
               onClick={handlePrevImage}
               className="absolute top-1/2 -translate-y-1/2 left-2 
-                 flex items-center justify-center
-                 w-6 h-6 sm:w-8 sm:h-8 rounded-full 
-                 bg-black/10 text-black text-sm sm:text-base
-                 hover:bg-black/30 transition-all duration-200 hover:scale-110 shadow-md"
+                         w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center
+                         rounded-full bg-black/10 text-black hover:bg-black/30 transition-all duration-200 shadow-md"
             >
               ‹
             </button>
             <button
               onClick={handleNextImage}
               className="absolute top-1/2 -translate-y-1/2 right-2 
-                 flex items-center justify-center
-                 w-6 h-6 sm:w-8 sm:h-8 rounded-full 
-                 bg-black/10 text-black text-sm sm:text-base
-                 hover:bg-black/30 transition-all duration-200 hover:scale-110 shadow-md"
+                         w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center
+                         rounded-full bg-black/10 text-black hover:bg-black/30 transition-all duration-200 shadow-md"
             >
               ›
             </button>
           </>
         )}
 
-        {/* Dots/indicators */}
+        {/* Dots */}
         {productImages.length > 1 && (
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-            {productImages.map((_, index) => (
+            {productImages.map((_, idx) => (
               <span
-                key={index}
-                onClick={(e) => handleDotClick(e, index)}
+                key={idx}
+                onClick={(e) => handleDotClick(e, idx)}
                 className={`h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full cursor-pointer ${
-                  index === currentImageIndex
+                  idx === currentImageIndex
                     ? "bg-black"
                     : "bg-gray-300 hover:bg-gray-400"
                 }`}
@@ -179,7 +193,7 @@ const productImages: string[] = (() => {
         )}
       </div>
 
-      {/* Card body */}
+      {/* Card Body */}
       <div className="p-3 sm:p-4 md:p-5 space-y-1 sm:space-y-2">
         <h2 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-gray-800 line-clamp-2">
           {name}

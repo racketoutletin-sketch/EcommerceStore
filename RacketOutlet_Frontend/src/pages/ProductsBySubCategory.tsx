@@ -1,16 +1,19 @@
-import TopBar from "../components/HomePage/TopBar";
-import Header from "../components/HomePage/Header";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../redux/store";
+
 import {
   fetchProductsBySubCategory,
   resetProducts,
 } from "../redux/features/products/productsListViewSlice";
-import { useDebounce } from "use-debounce";
+
 import ProductCard from "../components/ProductCard";
 import Loader from "../components/Loader";
+import TopBar from "../components/HomePage/TopBar";
+import Header from "../components/HomePage/Header";
+
+import { useDebounce } from "use-debounce";
 
 const ProductsBySubCategory = () => {
   const { subId } = useParams<{ subId: string }>();
@@ -37,6 +40,7 @@ const ProductsBySubCategory = () => {
 
   const [debouncedFilters] = useDebounce(filters, 500);
 
+  // Fetch products on subcategory or filters change
   useEffect(() => {
     if (subId) {
       dispatch(resetProducts());
@@ -171,20 +175,16 @@ const ProductsBySubCategory = () => {
 
         {/* Products Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {searchResults.map((product: any) => (
+          {searchResults.map((product) => (
             <div key={product.id} className="w-full min-w-0">
               <ProductCard
                 id={product.id}
                 name={product.name ?? ""}
-                description={product.description ?? ""}
                 main_image_url={product.main_image_url}
-                price={Number(product.price)}
-                discounted_price={
-                  product.discounted_price
-                    ? Number(product.discounted_price)
-                    : undefined
-                }
+                price={product.price}
+                discounted_price={product.discounted_price ?? undefined}
                 brand={product.brand ?? ""}
+                images={product.images ?? []}
               />
             </div>
           ))}

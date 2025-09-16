@@ -119,7 +119,7 @@ const Header: React.FC = () => {
                   onMouseEnter={() => handleMouseEnter(cat.id)}
                   onMouseLeave={handleMouseLeave}
                 >
-                  <h2 className="font-semibold text-base md:text-lg hover:text-red-600 transition-colors cursor-pointer">
+                  <h2 className="font-semibold text-base md:text-m hover:text-red-600 transition-colors cursor-pointer">
                     {cat.name}
                   </h2>
                 </div>

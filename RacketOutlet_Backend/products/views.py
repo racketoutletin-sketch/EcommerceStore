@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 
 from .models import Category, SubCategory, Product
 from .serializers import (
+    ProductListSerializer,
     # FeaturedCategorySerializer, 
     FeaturedSubCategorySerializer,
     SubCategorySerializer, CategorySerializer,
@@ -83,7 +84,7 @@ class ExclusiveProductListView(generics.ListAPIView):
 # Products by SubCategory
 # -------------------------------
 class ProductListBySubCategoryView(generics.ListAPIView):
-    serializer_class = ProductSerializer
+    serializer_class = ProductListSerializer
     permission_classes = [AllowAny]
     filter_backends = [filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter]
     search_fields = ['name', 'sku', 'brand']

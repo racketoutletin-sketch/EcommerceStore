@@ -45,6 +45,23 @@ class ProductSerializer(serializers.ModelSerializer):
         ]
 
 
+class ProductListSerializer(serializers.ModelSerializer):
+    images = ProductImageSerializer(many=True, read_only=True)
+    inventory = InventorySerializer(read_only=True)
+    current_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    sub_category_id = serializers.IntegerField(source='subcategory.id', read_only=True)
+    sub_category_name = serializers.CharField(source='subcategory.name', read_only=True)
+
+    class Meta:
+        model = Product
+        fields = [
+            'id', 'name', 'brand', 'discounted_price', 'current_price', 'price', 
+            'main_image_url', 
+            'is_featured', 'is_active',
+            'images', 'inventory',
+            'sub_category_id', 'sub_category_name'
+        ]
+
 # -------------------------------
 # Featured / Status Product Serializers
 # -------------------------------

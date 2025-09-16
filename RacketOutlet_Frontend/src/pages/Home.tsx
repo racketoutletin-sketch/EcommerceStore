@@ -22,17 +22,14 @@ import FeaturedCollections from "../components/HomePage/FeaturedCollections";
 import AboutRacketOutlet from "../components/HomePage/AboutRacketOutlet";
 import InfoCards from "../components/HomePage/InfoCards";
 import Footer from "../components/HomePage/Footer";
+import Loader from "../components/Loader";
 
-import useInitAuth from "../hooks/useInitAuth";
-import usePreloadSubCategories from "../hooks/usePreloadSubCategories";
+
 
 const Home = () => {
   const dispatch = useAppDispatch();
   const homeData = useAppSelector(selectHomeData);
   const loading = useAppSelector(selectHomeLoading);
-
-  useInitAuth();
-  usePreloadSubCategories();
 
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -60,7 +57,7 @@ const Home = () => {
       <Header />
       <main className="flex-grow max-w-[1840px] w-full mx-auto px-2 py-4">
         {loading || !homeData ? (
-  <p className="text-center py-16">Loading homepage...</p>
+<Loader />
 ) : (
   <>
     <HeroBanners />

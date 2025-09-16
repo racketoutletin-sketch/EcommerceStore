@@ -8,7 +8,6 @@ import Profile from "./pages/Profile";
 import ProfileUpdate from "./pages/ProfileUpdate";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
-import SubCatWithProducts from "./pages/SubCatWithProducts";
 import ProductsBySubCategory from "./pages/ProductsBySubCategory";
 import ProductDetail from "./pages/ProductDetail";
 import CartPage from "./pages/CartPage";
@@ -55,7 +54,6 @@ function AppRoutes() {
         <Route path="/orders/:id" element={<ProtectedRoute><OrderDetailPage /></ProtectedRoute>} />
 
         {/* Dynamic Routes */}
-        <Route path="/subcategories/:id" element={<SubCatWithProducts />} />
         <Route path="/subcategories/:subId/products" element={<ProductsBySubCategory />} />
         <Route path="/products/:productId" element={<ProductDetail />} />
         <Route path="/search" element={<SearchResults />} />

@@ -1,18 +1,23 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../../api/axios";
 
+interface Inventory {
+  quantity: number;
+  low_stock_threshold: number;
+  last_restocked_at: string;
+  is_low_stock: boolean;
+}
+
 interface Product {
   id: number;
   name: string;
-  slug: string;
   brand: string | null;
   price: number;
   current_price: number;
-  discounted_price?: number | null;
+  discounted_price: number | null;
   main_image_url?: string | null;
-  quantity: number;
-  description?: string;
-  extra_attributes?: { type?: string } | null;
+  images: string[];
+  inventory?: Inventory; // Include full inventory info
 }
 
 interface ProductListState {
@@ -21,9 +26,9 @@ interface ProductListState {
   availableProductTypes: string[];
   loading: boolean;
   error: string | null;
-  page: number;        // current page
-  totalPages: number;  // total number of pages
-  total: number;       // total number of products
+  page: number;
+  totalPages: number;
+  total: number;
 }
 
 const initialState: ProductListState = {
@@ -40,92 +45,93 @@ const initialState: ProductListState = {
 // Type guard
 const isString = (value: unknown): value is string => typeof value === "string";
 
-// Thunk
-export const fetchProductsBySubCategory = createAsyncThunk(
-  "productListView/fetchBySubCategory",
-  async (
-    params: {
-      subId: number;
-      sort?: string;
-      productType?: string;
-      brand?: string;
-      priceMin?: number;
-      priceMax?: number;
-      inStock?: boolean;
-      limit?: number;
-      page?: number;
-    },
-    { rejectWithValue }
-  ) => {
+// Fetch global brands once
+export const fetchGlobalBrands = createAsyncThunk<string[], void, { rejectValue: string }>(
+  "productListView/fetchGlobalBrands",
+  async (_, { rejectWithValue }) => {
     try {
-      const queryObj: Record<string, string> = {
-        subcategory_id: params.subId.toString(),
-      };
-
-      // only add when meaningful
-      if (params.sort && params.sort !== "relevance") {
-        queryObj.sort = params.sort;
-      }
-      if (params.productType && params.productType.trim() !== "") {
-        queryObj.product_type = params.productType;
-      }
-      if (params.brand && params.brand.trim() !== "") {
-        queryObj.brand = params.brand;
-      }
-      if (params.priceMin !== undefined && params.priceMin > 0) {
-        queryObj.price_min = params.priceMin.toString();
-      }
-      if (params.priceMax !== undefined && params.priceMax > 0) {
-        queryObj.price_max = params.priceMax.toString();
-      }
-      if (params.inStock === true) {
-        queryObj.in_stock = "true";
-      }
-
-      // pagination defaults
-      const limit = params.limit ?? 16;
-      const page = params.page ?? 1;
-      queryObj.limit = limit.toString();
-      queryObj.page = page.toString();
-
-      const query = new URLSearchParams(queryObj).toString();
-      const response = await api.get(
-        `https://wzonllfccvmvoftahudd.supabase.co/functions/v1/get-products-with-subcategory?${query}`
-      );
-
-      console.log("API Response:", response.data);
-
-      const products: Product[] = response.data.results ?? [];
-      const total: number = response.data.total ?? 0;
-      const pageFromApi: number = response.data.page ?? page;
-      const totalPages: number = response.data.totalPages ?? 1;
-
-      const brands: string[] = Array.from(
-        new Set(products.map((p) => p.brand).filter(isString))
-      );
-
-      const productTypes: string[] = Array.from(
-        new Set(products.map((p) => p.extra_attributes?.type).filter(isString))
-      );
-
-      return {
-        products,
-        brands,
-        productTypes,
-        page: pageFromApi,
-        totalPages,
-        total,
-      };
-    } catch (err: any) {
-      return rejectWithValue(
-        err.response?.data?.detail || err.message || "Failed to fetch products"
-      );
+      const response = await api.get<{ brands: string[] }>("/api/brands/");
+      return response.data.brands ?? [];
+    } catch {
+      return rejectWithValue("Failed to fetch global brands");
     }
   }
 );
 
+// Fetch products by subcategory
+export const fetchProductsBySubCategory = createAsyncThunk<
+  {
+    products: Product[];
+    brands: string[];
+    page: number;
+    totalPages: number;
+    total: number;
+  },
+  {
+    subId: number;
+    sort?: string;
+    productType?: string;
+    brand?: string;
+    priceMin?: number;
+    priceMax?: number;
+    inStock?: boolean;
+    limit?: number;
+    page?: number;
+  },
+  { rejectValue: string }
+>("productListView/fetchBySubCategory", async (params, { rejectWithValue }) => {
+  try {
+    const queryObj: Record<string, string> = {};
 
-const productListReducer = createSlice({
+    if (params.sort && params.sort !== "relevance") queryObj.sort = params.sort;
+    if (params.productType?.trim()) queryObj.product_type = params.productType;
+    if (params.brand?.trim()) queryObj.brand = params.brand;
+    if (params.priceMin && params.priceMin > 0) queryObj.price_min = params.priceMin.toString();
+    if (params.priceMax && params.priceMax > 0) queryObj.price_max = params.priceMax.toString();
+    if (params.inStock) queryObj.in_stock = "true";
+
+    const limit = params.limit ?? 16;
+    const page = params.page ?? 1;
+    queryObj.limit = limit.toString();
+    queryObj.page = page.toString();
+
+    const query = new URLSearchParams(queryObj).toString();
+    const response = await api.get(`/api/subcategories/${params.subId}/products/?${query}`);
+
+    const products: Product[] = (response.data.results ?? []).map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      brand: p.brand ?? null,
+      price: Number(p.price),
+      current_price: Number(p.current_price),
+      discounted_price: p.discounted_price ? Number(p.discounted_price) : null,
+      main_image_url: p.main_image_url ?? null,
+      images: p.images?.map((img: any) => img.image_url) ?? [],
+      inventory: p.inventory
+        ? {
+            quantity: p.inventory.quantity,
+            low_stock_threshold: p.inventory.low_stock_threshold,
+            last_restocked_at: p.inventory.last_restocked_at,
+            is_low_stock: p.inventory.is_low_stock,
+          }
+        : undefined,
+    }));
+
+    const total: number = response.data.count ?? 0;
+    const totalPages = Math.ceil(total / limit);
+
+    // Merge brands in current result
+    const brands: string[] = Array.from(
+      new Set(products.map((p) => p.brand).filter(isString))
+    );
+
+    return { products, brands, page, totalPages, total };
+  } catch (err: any) {
+    return rejectWithValue(err.response?.data?.detail || err.message || "Failed to fetch products");
+  }
+});
+
+const productListSlice = createSlice({
   name: "productListView",
   initialState,
   reducers: {
@@ -138,6 +144,9 @@ const productListReducer = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(fetchGlobalBrands.fulfilled, (state, action) => {
+        state.availableBrands = action.payload ?? [];
+      })
       .addCase(fetchProductsBySubCategory.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -145,18 +154,20 @@ const productListReducer = createSlice({
       .addCase(fetchProductsBySubCategory.fulfilled, (state, action) => {
         state.loading = false;
         state.searchResults = action.payload.products;
-        state.availableBrands = action.payload.brands;
-        state.availableProductTypes = action.payload.productTypes;
+        // Merge new brands with existing global brands
+        state.availableBrands = Array.from(
+          new Set([...state.availableBrands, ...action.payload.brands])
+        );
         state.page = action.payload.page;
         state.totalPages = action.payload.totalPages;
         state.total = action.payload.total;
       })
       .addCase(fetchProductsBySubCategory.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.error = action.payload ?? "Failed to fetch products";
       });
   },
 });
 
-export const { resetProducts } = productListReducer.actions;
-export default productListReducer.reducer;
+export const { resetProducts } = productListSlice.actions;
+export default productListSlice.reducer;

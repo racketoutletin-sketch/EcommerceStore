@@ -2,9 +2,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./features/auth/authSlice";
 import userReducer from "./features/user/userSlice";
-import productReducer from "./features/products/productSlice";
 import categoriesReducer from "./features/categories/categoriesSlice";
-import subCategoryReducer from "./features/subcategory/subcategorySlice";
 import productListReducer from "./features/products/productsListViewSlice";
 import productViewReducer from "./features/products/productDetailViewSlice";
 import productSearchReducer from "./features/products/productSearchSlice";
@@ -15,7 +13,6 @@ import ordersReducer from "./features/orders/ordersSlice";
 import orderDetailSlice from "./features/orders/orderDetailSlice";
 
 import wishlistSlice from "./features/wishlist/wishlistSlice";
-import preloadReducer from "./features/preload/preloadSlice";
 
 import { useDispatch, useSelector } from "react-redux";
 import type { TypedUseSelectorHook } from "react-redux";
@@ -30,8 +27,6 @@ export const store = configureStore({
   reducer: {
     auth: authReducer,
     user: userReducer,
-    products: productReducer,
-    subcategories: subCategoryReducer,
     categories: categoriesReducer,
     productView: productViewReducer,
     productListView: productListReducer,
@@ -41,7 +36,6 @@ export const store = configureStore({
     orders: ordersReducer,
     orderDetail: orderDetailSlice,
     productSearch: productSearchReducer,
-    preload: preloadReducer,
     home: homeReducer,
   },
 });
