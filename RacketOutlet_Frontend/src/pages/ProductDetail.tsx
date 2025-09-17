@@ -89,6 +89,7 @@ const ProductDetail: React.FC = () => {
       })
     );
   }, [productDetail, dispatch]);
+  console.log("productDetail Viewed:", productDetail);
 
   const handleToggleWishlist = () => {
     if (!productDetail) return;
