@@ -19,8 +19,8 @@ const CartPage: React.FC = () => {
 
   if (loading) return <Loader />;
 
-  const total =
-    cart?.items?.reduce((sum, item) => sum + parseFloat(item.subtotal), 0) || 0;
+  const total = cart?.items?.reduce((sum, item) => sum + item.subtotal, 0) || 0;
+
 
   const handleCheckout = () => {
     if (!cart || cart.items.length === 0) {

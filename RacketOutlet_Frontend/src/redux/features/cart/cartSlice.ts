@@ -1,8 +1,7 @@
 // src/redux/features/cart/cartSlice.ts
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
-
-import type { CartState } from "./types";
+import type { Cart } from "./types";
 import {
   fetchCartThunk,
   addCartItemThunk,
@@ -11,11 +10,14 @@ import {
   removeMultipleCartItemsThunk,
 } from "./cartThunks";
 
-// Load cart from localStorage
-const savedCart = localStorage.getItem("cart");
+interface CartState {
+  cart: Cart | null;
+  loading: boolean;
+  error: string | null;
+}
+
 const initialState: CartState = {
-  cart: savedCart ? JSON.parse(savedCart) : null,
-  items: savedCart ? JSON.parse(savedCart).items : [],
+  cart: null,
   loading: false,
   error: null,
 };
@@ -24,133 +26,54 @@ const cartSlice = createSlice({
   name: "cart",
   initialState,
   reducers: {
-    clearCart: (state) => {
-      state.cart = null;
-      state.items = [];
-      localStorage.removeItem("cart");
-    },
-    removeItemsFromCart: (state, action: PayloadAction<number[]>) => {
-      if (!state.cart) return;
-      state.items = state.items.filter((item) => !action.payload.includes(item.id));
-      state.cart.items = state.items;
-      state.cart.total_price = state.items
-        .reduce((sum, i) => sum + parseFloat(i.subtotal), 0)
-        .toFixed(2);
-      localStorage.setItem("cart", JSON.stringify(state.cart));
-    },
+    resetCart: () => initialState,
   },
   extraReducers: (builder) => {
-    builder
-      // ✅ Fetch Cart
-      .addCase(fetchCartThunk.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchCartThunk.fulfilled, (state, action) => {
-        state.loading = false;
-        state.cart = action.payload;
-        state.items = action.payload.items;
-        localStorage.setItem("cart", JSON.stringify(action.payload));
-      })
-      .addCase(fetchCartThunk.rejected, (state, action) => {
-        state.loading = false;
-        state.error =
-          (action.payload as string) || action.error.message || "Failed to fetch cart";
-      })
+    // ------------------- Fetch cart -------------------
+    builder.addCase(fetchCartThunk.pending, (state) => {
+      state.loading = true;
+    });
+    builder.addCase(fetchCartThunk.fulfilled, (state, action) => {
+      state.cart = action.payload;
+      state.loading = false;
+    });
+    builder.addCase(fetchCartThunk.rejected, (state, action) => {
+      state.error = action.error.message || "Failed to fetch cart";
+      state.loading = false;
+    });
 
-      // ✅ Add Item (Optimistic)
-      .addCase(addCartItemThunk.fulfilled, (state, action) => {
-        state.error = null;
-        const newItem = action.payload;
-        const existing = state.items.find((i) => i.product.id === newItem.product_id);
+    // ------------------- Add item → replace with server cart -------------------
+    builder.addCase(addCartItemThunk.fulfilled, (state, action) => {
+      state.cart = action.payload;
+    });
 
-        if (existing) {
-          existing.quantity += newItem.quantity;
-          existing.subtotal = (
-            parseFloat(existing.product.price) * existing.quantity
-          ).toFixed(2);
-        } else {
-          state.items.push({
-            id: Date.now(),
-            product: { id: newItem.product_id, name: "Loading...", price: "0" },
-            quantity: newItem.quantity,
-            subtotal: "0",
-          });
-        }
+    // ------------------- Update item → optimistic -------------------
+    builder.addCase(updateCartItemThunk.fulfilled, (state, action) => {
+      if (!state.cart) return;
+      const idx = state.cart.items.findIndex((i) => i.id === action.payload.id);
+      if (idx !== -1) {
+        state.cart.items[idx] = action.payload;
+      }
+    });
 
-        state.cart = {
-          ...state.cart!,
-          items: state.items,
-          total_price: state.items
-            .reduce((sum, i) => sum + parseFloat(i.subtotal), 0)
-            .toFixed(2),
-        };
-        localStorage.setItem("cart", JSON.stringify(state.cart));
-      })
-      .addCase(addCartItemThunk.rejected, (state, action) => {
-        state.error =
-          (action.payload as string) || action.error.message || "Failed to add item";
-      })
+    // ------------------- Remove single item → optimistic -------------------
+    builder.addCase(
+      removeCartItemThunk.fulfilled,
+      (state, action: PayloadAction<number>) => {
+        if (!state.cart) return;
+        state.cart.items = state.cart.items.filter(
+          (i) => i.id !== action.payload
+        );
+      }
+    );
 
-      // ✅ Update Item
-      .addCase(updateCartItemThunk.fulfilled, (state, action) => {
-        state.error = null;
-        const { id, quantity } = action.payload;
-        const item = state.items.find((i) => i.id === id);
-        if (item) {
-          item.quantity = quantity;
-          item.subtotal = (parseFloat(item.product.price) * quantity).toFixed(2);
-        }
-        state.cart!.items = state.items;
-        state.cart!.total_price = state.items
-          .reduce((sum, i) => sum + parseFloat(i.subtotal), 0)
-          .toFixed(2);
-        localStorage.setItem("cart", JSON.stringify(state.cart));
-      })
-      .addCase(updateCartItemThunk.rejected, (state, action) => {
-        state.error =
-          (action.payload as string) ||
-          action.error.message ||
-          "Failed to update item";
-      })
-
-      // ✅ Remove Item
-      .addCase(removeCartItemThunk.fulfilled, (state, action) => {
-        state.error = null;
-        const id = action.payload;
-        state.items = state.items.filter((i) => i.id !== id);
-        state.cart!.items = state.items;
-        state.cart!.total_price = state.items
-          .reduce((sum, i) => sum + parseFloat(i.subtotal), 0)
-          .toFixed(2);
-        localStorage.setItem("cart", JSON.stringify(state.cart));
-      })
-      .addCase(removeCartItemThunk.rejected, (state, action) => {
-        state.error =
-          (action.payload as string) ||
-          action.error.message ||
-          "Failed to remove item";
-      })
-
-      // ✅ Remove Multiple Items
-      .addCase(removeMultipleCartItemsThunk.fulfilled, (state, action) => {
-        state.error = null;
-        const ids = action.payload;
-        state.items = state.items.filter((i) => !ids.includes(i.id));
-        state.cart!.items = state.items;
-        state.cart!.total_price = state.items
-          .reduce((sum, i) => sum + parseFloat(i.subtotal), 0)
-          .toFixed(2);
-        localStorage.setItem("cart", JSON.stringify(state.cart));
-      })
-      .addCase(removeMultipleCartItemsThunk.rejected, (state, action) => {
-        state.error =
-          (action.payload as string) ||
-          action.error.message ||
-          "Failed to remove multiple items";
-      });
+    // ------------------- Remove multiple items → replace with server cart -------------------
+    builder.addCase(removeMultipleCartItemsThunk.fulfilled, (state, action) => {
+      state.cart = action.payload;
+    });
   },
 });
 
-export const { clearCart, removeItemsFromCart } = cartSlice.actions;
+export const { resetCart } = cartSlice.actions;
 export default cartSlice.reducer;
+

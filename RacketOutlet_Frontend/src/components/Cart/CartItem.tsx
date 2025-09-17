@@ -49,7 +49,7 @@ const CartItemComponent: React.FC<Props> = ({ item }) => {
       {/* Product Image & Name clickable */}
       <Link to={`/products/${item.product.id}`} className="flex items-center gap-4 flex-1">
         <img
-          src={item.product.image || "/placeholder.png"}
+          src={item.product.main_image_url || "/placeholder.png"}
           alt={item.product.name}
           className="w-20 h-20 object-cover rounded-lg"
         />

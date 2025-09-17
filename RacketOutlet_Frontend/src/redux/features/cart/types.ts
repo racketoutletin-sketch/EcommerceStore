@@ -1,21 +1,27 @@
 // src/redux/features/cart/types.ts
+
+export interface Product {
+  id: number;
+  name: string;
+  brand: string;
+  description?: string;
+  price: number;
+  discounted_price?: number | null;
+  main_image_url?: string;
+}
+
 export interface CartItem {
   id: number;
-  product: {
-    id: number;
-    name: string;
-    price: string;
-    discounted_price?: string;
-    image?: string;
-  };
+  product: Product;
+  product_id: number;
   quantity: number;
-  subtotal: string;
+  subtotal: number;
 }
 
 export interface Cart {
   id: number;
   items: CartItem[];
-  total_price: string;
+  total_price: number;
   created_at: string;
   updated_at: string;
 }
@@ -25,10 +31,8 @@ export interface CartItemPayload {
   quantity: number;
 }
 
-// CartState for Redux slice
-export interface CartState {
-  cart: Cart | null;          // full cart object
-  items: CartItem[];          // shortcut for cart.items
-  loading: boolean;
-  error: string | null;
+export interface UpdateCartItemPayload {
+  id: number;          // cartItem ID
+  product_id: number;  // product ID
+  quantity: number;
 }

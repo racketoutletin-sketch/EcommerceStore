@@ -8,6 +8,7 @@ import {
 } from "../redux/features/cart/cartThunks";
 import BuyNowButton from "../components/ui/BuyNowButton";
 import CartButton from "../components/ui/CartButton";
+import type { CartItemPayload } from "../redux/features/cart/types";
 
 interface ProductCardProps {
   id: number;
@@ -36,17 +37,18 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   const user = useAppSelector((state) => state.auth.user);
   const cart = useAppSelector((state) => state.cart.cart);
-  const cartItem = cart?.items?.find((item) => item.product.id === id);
+
+  // Find backend cart item by product ID
+  const cartItem = cart?.items.find((item) => item.product?.id === id);
   const inCart = !!cartItem;
+  const backendCartId = cartItem?.id; // cart item ID from backend
 
-  // Flicker-free image carousel
-  const productImages: string[] = (() => {
-    if (main_image_url) return [main_image_url, ...(images || [])];
-    if (images.length > 0) return images;
-    return ["/default.png"];
-  })();
+  const productImages: string[] = main_image_url
+    ? [main_image_url, ...(images || [])]
+    : images.length > 0
+    ? images
+    : ["/default.png"];
 
-  // Swipe support refs
   const startX = useRef(0);
   const isDragging = useRef(false);
 
@@ -76,15 +78,30 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
     try {
       setLoadingCart(true);
-      if (inCart && cartItem?.id) {
+
+      if (inCart && backendCartId) {
         await dispatch(
-          updateCartItemThunk({ id: cartItem.id, product_id: id, quantity })
+          updateCartItemThunk({ id: backendCartId, product_id: id, quantity })
         ).unwrap();
       } else {
-        await dispatch(addCartItemThunk({ product_id: id, quantity })).unwrap();
+        const payload: CartItemPayload = { product_id: id, quantity };
+        await dispatch(addCartItemThunk(payload)).unwrap();
       }
     } catch (err) {
       console.error("Cart update failed:", err);
+    } finally {
+      setLoadingCart(false);
+    }
+  };
+
+  const handleRemoveFromCart = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!backendCartId) return;
+    try {
+      setLoadingCart(true);
+      await dispatch(removeCartItemThunk(backendCartId)).unwrap();
+    } catch (err) {
+      console.error("Remove from cart failed:", err);
     } finally {
       setLoadingCart(false);
     }
@@ -121,7 +138,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
       onClick={handleView}
       className="bg-white w-full rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-shadow duration-300 relative group border cursor-pointer"
     >
-      {/* Flicker-free Image Carousel with swipe */}
+      {/* Image Carousel */}
       <div
         className="relative w-full h-40 sm:h-48 md:h-56 lg:h-64 overflow-hidden"
         onPointerDown={(e) => {
@@ -153,29 +170,23 @@ const ProductCard: React.FC<ProductCardProps> = ({
           />
         ))}
 
-        {/* Left/Right Buttons */}
         {productImages.length > 1 && (
           <>
             <button
               onClick={handlePrevImage}
-              className="absolute top-1/2 -translate-y-1/2 left-2 
-                         w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center
-                         rounded-full bg-black/10 text-black hover:bg-black/30 transition-all duration-200 shadow-md"
+              className="absolute top-1/2 -translate-y-1/2 left-2 w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center rounded-full bg-black/10 text-black hover:bg-black/30 transition-all duration-200 shadow-md"
             >
               ‹
             </button>
             <button
               onClick={handleNextImage}
-              className="absolute top-1/2 -translate-y-1/2 right-2 
-                         w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center
-                         rounded-full bg-black/10 text-black hover:bg-black/30 transition-all duration-200 shadow-md"
+              className="absolute top-1/2 -translate-y-1/2 right-2 w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center rounded-full bg-black/10 text-black hover:bg-black/30 transition-all duration-200 shadow-md"
             >
               ›
             </button>
           </>
         )}
 
-        {/* Dots */}
         {productImages.length > 1 && (
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
             {productImages.map((_, idx) => (
@@ -236,11 +247,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (cartItem?.quantity === 1 && cartItem?.id) {
-                    dispatch(removeCartItemThunk(cartItem.id));
-                  } else if (cartItem?.quantity && cartItem?.id) {
-                    handleAddToCart(cartItem.quantity - 1, e);
-                  }
+                  if (cartItem?.quantity === 1) handleRemoveFromCart(e);
+                  else handleAddToCart((cartItem?.quantity ?? 1) - 1, e);
                 }}
                 className="px-2 sm:px-3 md:px-4 py-1 sm:py-2 text-gray-700 hover:bg-gray-100"
               >
